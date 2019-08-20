@@ -1,6 +1,6 @@
 {
     "name": "codecrafting-net/adoldap",
-    "description": "A PHP seamless auth method do search on the Active Directory with ADO and LDAP",
+    "description": "A PHP seamless auth method to search on the Active Directory with ADO and LDAP",
     "keywords": ["ldap", "ado", "adsi", "adodb", "ldap-sso"],
     "license": "MIT",
     "authors": [
