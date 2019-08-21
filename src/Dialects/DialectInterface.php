@@ -185,5 +185,5 @@ abstract class DialectInterface
      * @param string $context the command context withing the dialect
      * @return void
      */
-    abstract public function getCommand($filter = null, $attributes = [], string $context = null);
+    abstract public function getCommand($filter, $attributes, string $context = null);
 }

@@ -5,7 +5,7 @@ namespace CodeCrafting\AdoLDAP\Connections;
 use CodeCrafting\AdoLDAP\Parser\FieldParser;
 use CodeCrafting\AdoLDAP\Connections\ADODBConnection;
 use CodeCrafting\AdoLDAP\Connections\ConnectionException;
-use CodeCrafting\AdoLDAP\Configuration\ConnectionConfiguration;
+use CodeCrafting\AdoLDAP\Configuration\AdoLDAPConfiguration;
 
 /**
  * Class LDAPProvider.
@@ -15,9 +15,9 @@ use CodeCrafting\AdoLDAP\Configuration\ConnectionConfiguration;
 class LDAPProvider
 {
     /**
-     * The provider connection configuration
+     * The connection configuration
      *
-     * @var ConnectionConfiguration
+     * @var AdoLDAPConfiguration
      */
     private $configuration;
 
@@ -53,7 +53,7 @@ class LDAPProvider
     /**
      * Constructor.
      *
-     * @param ConnectionConfiguration|array $configuration
+     * @param AdoLDAPConfiguration|array $configuration
      */
     public function __construct($configuration = [])
     {
@@ -69,17 +69,14 @@ class LDAPProvider
      */
     public function __destruct()
     {
-        if ($this->bound && $this->connection->isConnected()) {
-            $this->connection->disconnect();
-            $this->bound = false;
-        }
+        $this->unbind();
     }
 
 
     /**
      * Get the provider connection configuration
      *
-     * @return  ConnectionConfiguration
+     * @return  AdoLDAPConfiguration
      */
     public function getConfiguration()
     {
@@ -89,16 +86,16 @@ class LDAPProvider
     /**
      * Set the provider connection configuration
      *
-     * @param  ConnectionConfiguration|array  $configuration  The provider connection configuration
+     * @param  AdoLDAPConfiguration|array  $configuration  The provider connection configuration
      * @throws CodeCrafting\AdoLDAP\Configuration\ConfigurationException when configuration is invalid
      * @return  self
      */
     public function setConfiguration($configuration = [])
     {
         if (is_array($configuration)) {
-            $configuration = new ConnectionConfiguration($configuration);
+            $configuration = new AdoLDAPConfiguration($configuration);
         }
-        if ($configuration instanceof ConnectionConfiguration) {
+        if ($configuration instanceof AdoLDAPConfiguration) {
             $this->configuration = $configuration;
             $dialectClass = $this->configuration->get('dialect');
             $this->dialect = new $dialectClass();
@@ -109,7 +106,7 @@ class LDAPProvider
 
             return $this;
         }
-        $class = ConnectionConfiguration::class;
+        $class = AdoLDAPConfiguration::class;
 
         throw new InvalidArgumentException("Configuration must be array or instance of {$class}");
     }
@@ -152,6 +149,22 @@ class LDAPProvider
     }
 
     /**
+     * Unbind and disconnect from ADODB
+     *
+     * @return void
+     */
+    public function unbind()
+    {
+        if ($this->bound) {
+            if($this->connection->isConnected()) {
+                $this->connection->disconnect();
+            }
+            $this->dialect->setBaseDn($this->configuration->get('baseDn'));
+            $this->bound = false;
+        }
+    }
+
+    /**
      * Search entries on LDAP BASE DN with the provided filter
      *
      * @param string $filter
@@ -160,7 +173,7 @@ class LDAPProvider
      * @param bool|null $containerNameOnly Only returns the name for container values. Null value will be replaced by the default provided configuration
      * @return array
      */
-    public function search($filter = null, $attributes = [], $context = null, $containerNameOnly = null)
+    public function search($filter, $attributes, $context = null, $containerNameOnly = null)
     {
         if ($this->bound) {
             $containerNameOnly = ($containerNameOnly !== null) ? $containerNameOnly : $this->configuration->get('containerNameOnly');
@@ -173,7 +186,7 @@ class LDAPProvider
     }
 
     /**
-     * Parse LDAP ResultSET Fields to native PHP values.
+     * Parse LDAP ResultSet Fields to native PHP values.
      *
      * @param \VARIANT $resultSet
      * @param bool $containerNameOnly Only returns the name for container values

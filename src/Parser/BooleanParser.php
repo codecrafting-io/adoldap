@@ -7,7 +7,7 @@ namespace CodeCrafting\AdoLDAP\Parser;
  *
  * Parse the ADO boolean type to native PHP boolean
  */
-class BooleanParser extends ParserInterface
+class BooleanParser extends Parser
 {
     /**
      * ADO compatibile types

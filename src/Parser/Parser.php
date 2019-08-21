@@ -3,9 +3,9 @@
 namespace CodeCrafting\AdoLDAP\Parser;
 
 /**
- * Interface ParserInterface
+ * Interface Parser
  */
-abstract class ParserInterface
+abstract class Parser
 {
     const INT = 0;
     const STRING = 1;
@@ -22,7 +22,7 @@ abstract class ParserInterface
     abstract public function getADOTypes();
 
     /**
-     * Get the ParserInterface type
+     * Get the Parser type
      *
      * @return int
      */
@@ -54,7 +54,7 @@ abstract class ParserInterface
     /**
      * Dynamically get the available parsers
      *
-     * @return ParserInterface[]
+     * @return Parser[]
      */
     public static function getParsers()
     {

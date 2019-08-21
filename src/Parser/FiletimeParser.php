@@ -7,7 +7,7 @@ namespace CodeCrafting\AdoLDAP\Parser;
  *
  * Parse the ADO Filetime type to native PHP DateTime
  */
-class FiletimeParser extends ParserInterface
+class FiletimeParser extends Parser
 {
     /**
      * ADO compatibile types

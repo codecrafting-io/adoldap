@@ -7,7 +7,7 @@ namespace CodeCrafting\AdoLDAP\Parser;
  *
  * Parse the ADO string types to native PHP string
  */
-class StringParser extends ParserInterface
+class StringParser extends Parser
 {
     /**
      * ADO compatibile types

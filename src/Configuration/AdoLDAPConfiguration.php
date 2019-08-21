@@ -6,11 +6,11 @@ use CodeCrafting\AdoLDAP\Dialects\LDAPDialect;
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 
 /**
- * Class ConnectionConfiguration.
+ * Class AdoLDAPConfiguration.
  *
  * Contains an array of configuration options for a ADODB LDAP connection.
  */
-class ConnectionConfiguration
+class AdoLDAPConfiguration
 {
     /**
      * Connection default configuration

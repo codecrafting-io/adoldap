@@ -12,21 +12,25 @@ class SQLDialect extends DialectInterface
     /**
      * {@inheritdoc}
      */
-    public function getCommand($filter = null, $attributes = [], string $context = null)
+    public function getCommand($filter, $attributes, string $context = null)
     {
-        $adPath = parent::PROTOCOL;
-        if ($this->isSsl()) {
-            $adPath = parent::SSL_PROTOCOL;
-        }
-        if ($this->host) {
-            $adPath .= $this->host;
-            if ($this->port != parent::PORT) {
-                $adPath .= ':' . $this->port;
+        if ((is_array($attributes) || is_string($attributes)) && ! empty($attributes)) {
+            $adPath = parent::PROTOCOL;
+            if ($this->isSsl()) {
+                $adPath = parent::SSL_PROTOCOL;
             }
-        }
-        $adPath .= '/' . $this->baseDn;
-        $attributes = implode(',', $attributes);
+            if ($this->host) {
+                $adPath .= $this->host;
+                if ($this->port != parent::PORT) {
+                    $adPath .= ':' . $this->port;
+                }
+            }
+            $adPath .= '/' . $this->baseDn;
+            $attributes = implode(',', $attributes);
 
-        return "SELECT {$attributes} FROM '{$adPath}' WHERE {$filter} {$context}";
+            return "SELECT {$attributes} FROM '{$adPath}' WHERE {$filter} {$context}";
+        } else {
+            throw new DialectException('attributes must be a string or array and not empty');
+        }
     }
 }

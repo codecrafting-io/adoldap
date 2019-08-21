@@ -7,7 +7,7 @@ namespace CodeCrafting\AdoLDAP\Parser;
  *
  * Parse the ADO integer types to native PHP int
  */
-class IntParser extends ParserInterface
+class IntParser extends Parser
 {
     /**
      * ADO compatibile types

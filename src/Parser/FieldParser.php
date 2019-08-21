@@ -12,7 +12,7 @@ class FieldParser
     /**
      * All available parsers
      *
-     * @var ParserInterface[]
+     * @var Parser[]
      */
     private $parsers;
 
@@ -23,7 +23,7 @@ class FieldParser
      */
     public function __construct()
     {
-        $this->parsers = ParserInterface::getParsers();
+        $this->parsers = Parser::getParsers();
     }
 
     /**
@@ -50,7 +50,7 @@ class FieldParser
             foreach ($this->parsers as $parser) {
                 if($parser->isType($fieldSchema['type'])) {
                     $value = $parser->parse($fieldSchema['value']);
-                    if ($parser->getType() == ParserInterface::STRING) {
+                    if ($parser->getType() == Parser::STRING) {
                         return $this->parseContainer($value, $containerNameOnly);
                     }
 
@@ -80,7 +80,7 @@ class FieldParser
                 $value = $field->value;
                 if($type == \VT_VARIANT && is_a($value, \VARIANT::class)) {
                     $type = variant_get_type($value);
-                    if(! $this->getParser(ParserInterface::FILETIME)->isType($type)) {
+                    if(! $this->getParser(Parser::FILETIME)->isType($type)) {
                         $type = $field->type;
                     }
                 }
@@ -104,7 +104,7 @@ class FieldParser
     }
 
     /**
-     * Get the parser by a ParserInterface constant ID
+     * Get the parser by a Parser constant ID
      *
      * @param integer $parserId
      * @return void
