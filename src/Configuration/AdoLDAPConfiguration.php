@@ -18,7 +18,7 @@ class AdoLDAPConfiguration
      * @var array
      */
     protected $options = [
-        // An array of LDAP hosts.
+        // The host address.
         'host' => null,
 
         // The port to use for connecting to your host.
@@ -46,7 +46,10 @@ class AdoLDAPConfiguration
         'autoBind' => true,
 
         //Whether or not to return container values with only the name
-        'containerNameOnly' => true
+        'containerNameOnly' => true,
+
+        //Whether or not to bing to logged user DC
+        'bindToLogonServer' => false
     ];
 
     /**

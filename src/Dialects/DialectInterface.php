@@ -183,7 +183,7 @@ abstract class DialectInterface
      * @param mixed $filter the filter conditions within the dialect
      * @param array|string $attributes
      * @param string $context the command context withing the dialect
-     * @return void
+     * @return string
      */
     abstract public function getCommand($filter, $attributes, string $context = null);
 }

@@ -58,7 +58,7 @@ class FieldParser
                 }
             }
 
-            return $fieldSchema;
+            return $fieldSchema['value'];
         }
 
         return null;

@@ -2,6 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Parser;
 
+use DateTime;
+
 /**
  * Class FileTimeParser.
  *
@@ -42,13 +44,15 @@ class FiletimeParser extends Parser
                 if ($low < 0) {
                     $high += 1;
                 }
-                $secsAfterADEpoch = ($high * pow(2, 32) + $low) / pow(10, 7);
-                $adToUnixConverter = ((1970 - 1601) * 365 - 3 + round((1970 - 1601) / 4)) * 86400;
-                $unixTimestamp = intval($secsAfterADEpoch - $adToUnixConverter);
+                $windowsTimestamp = ($high << 32) + $low;
+                $unixTimestamp = intval($windowsTimestamp / 10000000) + -11644473600;
                 $dt = new \DateTime();
                 $dt->setTimestamp($unixTimestamp);
-
                 return $dt;
+            } elseif($high == $low && $high == 0) {
+                $dt = new \DateTime();
+                $dt->setTimestamp(-11644473600);
+                $dt;
             }
         }
 

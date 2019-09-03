@@ -19,11 +19,12 @@ class LDAPDialect extends DialectInterface
             if ($this->isSsl()) {
                 $adPath = parent::SSL_PROTOCOL;
             }
-            if ($this->host) {
+            if ($this->host && $this->baseDn != DialectInterface::ROOT_DN) {
                 $adPath .= $this->host;
                 if ($this->port != parent::PORT) {
                     $adPath .= ':' . $this->port;
                 }
+                $adPath .= '/';
             }
             $adPath .= $this->baseDn;
             $attributes = implode(',', $attributes);

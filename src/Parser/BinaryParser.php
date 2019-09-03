@@ -5,7 +5,7 @@ namespace CodeCrafting\AdoLDAP\Parser;
 /**
  * Class BinaryParser.
  *
- * Parse the ADO OctetString Array to native PHP base64 encoded string
+ * Parse the ADO binary Array to native PHP base64 encoded string
  */
 class BinaryParser extends Parser
 {
