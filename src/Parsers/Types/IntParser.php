@@ -1,18 +1,18 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 /**
- * Class BooleanParser.
+ * Class IntParser.
  *
- * Parse the ADO boolean type to native PHP boolean
+ * Parse the ADO integer types to native PHP int
  */
-class BooleanParser extends Parser
+class IntParser extends TypeParser
 {
     /**
      * ADO compatibile types
      */
-    const ADO_TYPES = [11];
+    const ADO_TYPES = [\VT_I4, 20];
 
     /**
      * @inheritDoc
@@ -27,7 +27,7 @@ class BooleanParser extends Parser
      */
     public function getType()
     {
-        return parent::BOOLEAN;
+        return parent::INT;
     }
 
     /**
@@ -35,6 +35,6 @@ class BooleanParser extends Parser
      */
     public function parse($value)
     {
-        return boolval($value);
+        return intval($value);
     }
 }

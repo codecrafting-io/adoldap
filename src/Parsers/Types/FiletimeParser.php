@@ -1,6 +1,6 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 use DateTime;
 
@@ -9,7 +9,7 @@ use DateTime;
  *
  * Parse the ADO Filetime type to native PHP DateTime
  */
-class FiletimeParser extends Parser
+class FiletimeParser extends TypeParser
 {
     /**
      * ADO compatibile types

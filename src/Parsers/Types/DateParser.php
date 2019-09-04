@@ -1,13 +1,13 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 /**
  * Class DateParser.
  *
  * Parse the ADO DATE types to native PHP DateTime
  */
-class DateParser extends Parser
+class DateParser extends TypeParser
 {
     /**
      * ADO compatibile types

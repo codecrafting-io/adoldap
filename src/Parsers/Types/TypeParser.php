@@ -1,11 +1,11 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 /**
- * Interface Parser
+ * Class TypeParser.
  */
-abstract class Parser
+abstract class TypeParser
 {
     const INT = 0;
     const STRING = 1;

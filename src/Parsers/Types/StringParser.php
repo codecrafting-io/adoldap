@@ -1,18 +1,18 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 /**
- * Class IntParser.
+ * Class StringParser.
  *
- * Parse the ADO integer types to native PHP int
+ * Parse the ADO string types to native PHP string
  */
-class IntParser extends Parser
+class StringParser extends TypeParser
 {
     /**
      * ADO compatibile types
      */
-    const ADO_TYPES = [\VT_I4, 20];
+    const ADO_TYPES = [130, 200, 201, 202];
 
     /**
      * @inheritDoc
@@ -27,7 +27,7 @@ class IntParser extends Parser
      */
     public function getType()
     {
-        return parent::INT;
+        return parent::STRING;
     }
 
     /**
@@ -35,6 +35,6 @@ class IntParser extends Parser
      */
     public function parse($value)
     {
-        return intval($value);
+        return utf8_encode(strval($value));
     }
 }

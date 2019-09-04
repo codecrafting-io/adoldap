@@ -1,20 +1,22 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers;
+
+use CodeCrafting\AdoLDAP\Parsers\Types\TypeParser;
 
 /**
- * Class FieldParser.
+ * Class Parser.
  *
  * Parse ResultSet field ADO values
  */
-class FieldParser
+class Parser implements ParserInterface
 {
     /**
-     * All available parsers
+     * All available type parsers
      *
-     * @var Parser[]
+     * @var TypeParser[]
      */
-    private $parsers;
+    private $typeParsers;
 
     /**
      * Constructor.
@@ -23,17 +25,13 @@ class FieldParser
      */
     public function __construct()
     {
-        $this->parsers = Parser::getParsers();
+        $this->typeParsers = TypeParser::getParsers();
     }
 
     /**
-     * Parse the field to PHP native value
-     *
-     * @param mixed $field
-     * @param boolean $containerNameOnly Only returns the name for container values
-     * @return void
+     * @inheritDoc
      */
-    public function parse($field, $containerNameOnly)
+    public function parse($field, bool $containerNameOnly)
     {
         if ($field !== null) {
             $fieldSchema = $this->getFieldSchema($field);
@@ -47,10 +45,10 @@ class FieldParser
                     return $aux;
                 }
             }
-            foreach ($this->parsers as $parser) {
-                if($parser->isType($fieldSchema['type'])) {
-                    $value = $parser->parse($fieldSchema['value']);
-                    if ($parser->getType() == Parser::STRING) {
+            foreach ($this->typeParsers as $typeParser) {
+                if ($typeParser->isType($fieldSchema['type'])) {
+                    $value = $typeParser->parse($fieldSchema['value']);
+                    if ($typeParser->getType() == TypeParser::STRING) {
                         return $this->parseContainer($value, $containerNameOnly);
                     }
 
@@ -75,12 +73,12 @@ class FieldParser
         $type = 202;
         $value = null;
         if (is_a($field, \VARIANT::class)) {
-            if(isset($field->type)) {
+            if (isset($field->type)) {
                 $type = $field->type;
                 $value = $field->value;
-                if($type == \VT_VARIANT && is_a($value, \VARIANT::class)) {
+                if ($type == \VT_VARIANT && is_a($value, \VARIANT::class)) {
                     $type = variant_get_type($value);
-                    if(! $this->getParser(Parser::FILETIME)->isType($type)) {
+                    if (! $this->getTypeParser(TypeParser::FILETIME)->isType($type)) {
                         $type = $field->type;
                     }
                 }
@@ -89,7 +87,7 @@ class FieldParser
                 $value = $field;
             }
         } else {
-            if(is_array($field)) {
+            if (is_array($field)) {
                 $type = 12;
             } else {
                 $type = is_int($field) ? 3 : 202;
@@ -106,12 +104,12 @@ class FieldParser
     /**
      * Get the parser by a Parser constant ID
      *
-     * @param integer $parserId
+     * @param integer $typeParserId
      * @return void
      */
-    private function getParser(int $parserId)
+    private function getTypeParser(int $typeParserId)
     {
-        return $this->parsers[$parserId];
+        return $this->typeParsers[$typeParserId];
     }
 
     /**

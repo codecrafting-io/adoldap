@@ -3,6 +3,7 @@
 namespace CodeCrafting\AdoLDAP\Connections;
 
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
+use InvalidArgumentException;
 
 /**
  * Class ADODBConnection.
@@ -26,6 +27,20 @@ class ADODBConnection
     private $connection;
 
     /**
+     * Connection timeout in seconds
+     *
+     * @var int
+     */
+    private $timeout = 30;
+
+    /**
+     * Maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
+     *
+     * @var integer
+     */
+    private $pageSize = 1000;
+
+    /**
      * Get the connection status of the connection
      *
      * @return  bool
@@ -38,18 +53,77 @@ class ADODBConnection
     /**
      * Create ao ADODB Connection with ADSI Provider
      *
+     * @param string $username
+     * @param string $password
      * @return bool
      */
-    public function connect()
+    public function connect(string $username = null, string $password = null)
     {
         if (! $this->isConnected()) {
-            $this->connection = new \COM('ADODB.Connection') or Die('Failed to create a ADODB connection');
+            $this->connection = new \COM('ADODB.Connection') or die('Failed to create a ADODB connection');
             $this->connection->Provider = 'ADsDSOObject';
+            if (! (empty($username) || empty($password))) {
+                $this->connection->Properties['User ID'] = $username;
+                $this->connection->Properties['Password'] = $password;
+                $this->connection->Properties['Encrypt Password'] = true;
+            }
             $this->connection->open();
             $this->connected = true;
         }
 
         return true;
+    }
+
+    /**
+     * Get connection timeout in seconds
+     *
+     * @return  int
+     */
+    public function getTimeout()
+    {
+        return $this->timeout;
+    }
+
+    /**
+     * Set connection timeout in seconds
+     *
+     * @param  int  $timeout  Connection timeout in seconds
+     *
+     * @return  self
+     */
+    public function setTimeout(int $timeout)
+    {
+        $this->timeout = $timeout;
+
+        return $this;
+    }
+
+    /**
+     * Get maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
+     *
+     * @return  integer
+     */
+    public function getPageSize()
+    {
+        return $this->pageSize;
+    }
+
+    /**
+     * Set maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
+     *
+     * @param  integer  $pageSize  Maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
+     * @throws InvalidArgumentException if pageSize is lower than 1
+     * @return  self
+     */
+    public function setPageSize($pageSize)
+    {
+        if ($pageSize >= 0) {
+            $this->pageSize = $pageSize;
+        } else {
+            throw new InvalidArgumentException('pageSize must not be negative');
+        }
+
+        return $this;
     }
 
     /**
@@ -88,16 +162,20 @@ class ADODBConnection
      * If successful, returns a VARIANT (type 9) for COM _ResultSet interface
      *
      * @param string $command
-     * @throws ConnectionException When there's no connection established or failed to execute a command
+     * @throws ConnectionException When there's no connection established or
      * @return \VARIANT
      */
-    public function execute(string $command)
+    public function execute(string $command, int $limit = 0)
     {
-        if ($this->isConnected()) {
+        if ($this->connected) {
             try {
                 $adodbCommand = new \COM("ADODB.Command");
                 $adodbCommand->ActiveConnection = $this->connection;
                 $adodbCommand->CommandText = $command;
+                $adodbCommand->Properties['Timeout'] = $this->timeout;
+                if ($this->pageSize > 0) {
+                    $adodbCommand->Properties['Page Size'] = $this->pageSize;
+                }
 
                 return $adodbCommand->execute();
             } catch (\com_exception $e) {

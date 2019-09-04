@@ -1,13 +1,13 @@
 <?php
 
-namespace CodeCrafting\AdoLDAP\Parser;
+namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
 /**
  * Class BinaryParser.
  *
  * Parse the ADO binary Array to native PHP base64 encoded string
  */
-class BinaryParser extends Parser
+class BinaryParser extends TypeParser
 {
     /**
      * ADO compatibile types

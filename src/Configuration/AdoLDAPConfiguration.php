@@ -2,6 +2,7 @@
 
 namespace CodeCrafting\AdoLDAP\Configuration;
 
+use CodeCrafting\AdoLDAP\Parsers\Parser;
 use CodeCrafting\AdoLDAP\Dialects\LDAPDialect;
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 
@@ -45,11 +46,22 @@ class AdoLDAPConfiguration
         // Whether or not to automatic bind to the provided host and BaseDN
         'autoBind' => true,
 
+        //Timeout of connection execution in seconds
+        'timeout' => 30,
+
+        //Maximum number of objects to return in a results set
+        'pageSize' => 1000,
+
+        //Whether or not to check connection execution on bind
+        'checkConnection' => false,
+
         //Whether or not to return container values with only the name
         'containerNameOnly' => true,
 
         //Whether or not to bing to logged user DC
-        'bindToLogonServer' => false
+        'bindToLogonServer' => false,
+
+        'parser' => Parser::class
     ];
 
     /**

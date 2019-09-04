@@ -2,13 +2,15 @@
 
 namespace CodeCrafting\AdoLDAP\Connections;
 
+use InvalidArgumentException;
 use CodeCrafting\AdoLDAP\AdoLDAPException;
-use CodeCrafting\AdoLDAP\Parser\FieldParser;
+use CodeCrafting\AdoLDAP\Parsers\ParserInterface;
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 use CodeCrafting\AdoLDAP\Connections\ADODBConnection;
 use CodeCrafting\AdoLDAP\Connections\ExecutionException;
 use CodeCrafting\AdoLDAP\Connections\ConnectionException;
 use CodeCrafting\AdoLDAP\Configuration\AdoLDAPConfiguration;
+use CodeCrafting\AdoLDAP\Configuration\ConfigurationException;
 
 /**
  * Class LDAPProvider.
@@ -48,9 +50,9 @@ class LDAPProvider
     /**
      * Field data parser
      *
-     * @var FieldParser
+     * @var ParserInterface
      */
-    private $fieldParser;
+    private $parser;
 
     /**
      * Default naming context for the current connection
@@ -73,6 +75,7 @@ class LDAPProvider
      */
     private $domainName;
 
+    const ADO_RESULTSET_OPEN = 1;
 
     /**
      * Constructor.
@@ -82,9 +85,15 @@ class LDAPProvider
     public function __construct($configuration = [])
     {
         $this->setConfiguration($configuration);
-        $this->fieldParser = new FieldParser($this->configuration->get('containerNameOnly'));
-        if ($this->configuration->get('autoBind')) {
-            $this->bind();
+        $parser = $this->configuration->get('parser');
+        $parser = new $parser();
+        if ($parser instanceof ParserInterface) {
+            $this->parser = $parser;
+            if ($this->configuration->get('autoBind')) {
+                $this->bind();
+            }
+        } else {
+            throw new ConfigurationException('parser must implements ParserInterface');
         }
     }
 
@@ -180,6 +189,7 @@ class LDAPProvider
                 $this->domainName = exec('echo %userdomain%');
             }
         }
+
         return $this->domainName;
     }
 
@@ -195,16 +205,17 @@ class LDAPProvider
             $this->dialect->setBaseDn('OU=DOMAIN CONTROLLERS,' . $this->defaultNamingContext);
             $result = null;
             try {
-                $result = $this->search('(objectCategory=Computer)', ['cn']);
+                $result = $this->search('(objectCategory=Computer)', ['dnsHostName']);
             } catch (ExecutionException $e) {
                 $this->dialect->setBaseDn($baseDn);
                 throw $e;
             }
             $controllers = [];
-            if ($result) {
+            $entries = $this->getEntries($result);
+            if ($entries) {
                 $controllers = array_map(function ($controller) {
-                    return strtolower($controller['cn']) . '.' . $this->getDomain();
-                }, $result);
+                    return strtolower($controller['dnsHostName']);
+                }, $entries);
             }
             sort($controllers);
             $this->dialect->setBaseDn($baseDn);
@@ -321,6 +332,7 @@ class LDAPProvider
     public function bind()
     {
         $host = ($this->configuration->get('bindToLogonServer')) ? $this->getLogonDomainController() : null;
+
         return $this->bindWithServer($host);
     }
 
@@ -334,16 +346,21 @@ class LDAPProvider
     {
         if (! $this->bound) {
             $this->connection = new ADODBConnection();
+            $this->connection->setTimeout($this->configuration->get('timeout'));
+            $this->connection->setPageSize($this->configuration->get('pageSize'));
 
             //For some reason is faster to bind to RootDSE first
             $this->defaultNamingContext = $this->connection->getDefaultNamingContext();
             if ($this->dialect->isRootDn()) {
                 $this->dialect->setBaseDn($this->defaultNamingContext);
             }
-            if ($this->connection->connect()) {
+            if ($this->connection->connect($this->configuration->get('username'), $this->configuration->get('password'))) {
                 $this->bound = true;
                 if ($host) {
                     $this->dialect->setHost($host);
+                }
+                if ($this->configuration->get('checkConnection')) {
+                    return $this->checkConnection();
                 }
 
                 return true;
@@ -373,55 +390,122 @@ class LDAPProvider
     }
 
     /**
-     * Search entries on LDAP BASE DN with the provided filter
+     * Search entries on LDAP BASE DN with the provided settings
      *
      * @param string $filter
      * @param array $attributes
      * @param string $context Context of the search within it's search dialect
-     * @param bool|null $containerNameOnly Only returns the name for container values. Null value will be replaced by the default provided configuration
-     * @return array
+     * @return \VARIANT
      */
-    public function search($filter, $attributes, $context = null, $containerNameOnly = null)
+    public function search($filter, $attributes, $context = null)
     {
         if ($this->bound) {
-            $containerNameOnly = ($containerNameOnly !== null) ? $containerNameOnly : $this->configuration->get('containerNameOnly');
             $command = $this->dialect->getCommand($filter, $attributes, $context);
-            $resultSet = $this->connection->execute($command);
-
-            return $this->parseResultSet($resultSet, $containerNameOnly);
+            try {
+                return $this->connection->execute($command);
+            } catch (ConnectionException $e) {
+                $this->unbind();
+                throw $e;
+            }
         } else {
             throw new ConnectionException("Connection not established");
         }
     }
 
     /**
-     * Parse LDAP ResultSet Fields to native PHP values.
+     * Get resultset size from search
      *
      * @param \VARIANT $resultSet
-     * @param bool $containerNameOnly Only returns the name for container values
+     * @throws InvalidArgumentException|AdoLDAPException if resultSet is invalid or resultSet is not opened
+     * @return int
+     */
+    public function getEntrySize($resultSet)
+    {
+        if (is_object($resultSet) && $resultSet instanceof \VARIANT) {
+            if ($resultSet->State === self::ADO_RESULTSET_OPEN) {
+                $resultSet->MoveLast();
+
+                return $resultSet->RecordCount;
+            } else {
+                throw new AdoLDAPException('resultSet must be open');
+            }
+        } else {
+            throw new InvalidArgumentException('resultSet must be a variant object');
+        }
+    }
+
+    /**
+     * Parse LDAP ResultSet Fields entries to native PHP values
+     *
+     * @param \VARIANT $resultSet
+     * @param bool|null $containerNameOnly
+     * @param int $offset
+     * @param int $limit
+     * @throws InvalidArgumentException if resultSet, offset or limit is invalid
      * @return array
      */
-    private function parseResultSet($resultSet, $containerNameOnly)
+    public function getEntries($resultSet, $containerNameOnly = null, int $offset = 0, int $limit = 0)
     {
-        $result = [];
-        while (! $resultSet->EOF) {
-            $aux = [];
-            foreach ($resultSet->fields as $key => $field) {
-                if ($field->name == 'distinguishedName') {
-                    $aux[$field->name] = $this->fieldParser->parse($field, false);
-                } else {
-                    $aux[$field->name] = $this->fieldParser->parse($field, $containerNameOnly);
+        if (is_object($resultSet) && $resultSet instanceof \VARIANT) {
+            if ($offset >= 0 && $limit >= 0) {
+                $containerNameOnly = ($containerNameOnly !== null) ? $containerNameOnly : $this->configuration->get('containerNameOnly');
+                $result = [];
+                if (! $resultSet->EOF) {
+                    if ($resultSet->AbsolutePosition > 1) {
+                        $resultSet->MoveFirst();
+                    }
+                    if ($offset > 0) {
+                        $resultSet->Move($offset);
+                    }
                 }
+                $size = 0;
+                while (! $resultSet->EOF && ($limit == 0 || $size < $limit)) {
+                    $aux = [];
+                    foreach ($resultSet->fields as $key => $field) {
+                        if ($field->name == 'distinguishedName') {
+                            $aux[$field->name] = $this->parser->parse($field, false);
+                        } else {
+                            $aux[$field->name] = $this->parser->parse($field, $containerNameOnly);
+                        }
+                    }
+                    if ($aux) {
+                        $result[] = $aux;
+                    }
+                    $size++;
+                    $resultSet->MoveNext();
+                }
+                $resultSet->close();
+
+                return $result;
+            } else {
+                throw new InvalidArgumentException('offset and limit must not be negative');
             }
-            if ($aux) {
-                $result[] = $aux;
-            }
-            $resultSet->MoveNext();
+        } else {
+            throw new InvalidArgumentException('resultSet must be a VARIANT object');
         }
-        if ($resultSet) {
-            $resultSet->close();
+    }
+
+    /**
+     * Get the ADODB Connection
+     *
+     * @return  ADODBConnection
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
+     * Check the connection
+     *
+     * @return boolean
+     */
+    public function checkConnection()
+    {
+        if ($this->bound) {
+            return empty($this->search('(objectClass=*)', ['ADsPath'], 'base'));
         }
 
-        return $result;
+        return false;
     }
 }
