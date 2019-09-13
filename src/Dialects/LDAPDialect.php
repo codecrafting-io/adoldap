@@ -12,7 +12,7 @@ class LDAPDialect extends DialectInterface
     /**
      * {@inheritdoc}
      */
-    public function getCommand($filter, $attributes, string $context = null)
+    public function getCommand($filter, $attributes)
     {
         if ((is_array($attributes) || is_string($attributes)) && ! empty($attributes)) {
             $adPath = parent::PROTOCOL;
@@ -34,11 +34,6 @@ class LDAPDialect extends DialectInterface
             }
             if ($attributes) {
                 $command .= ";{$attributes}";
-            }
-            if ($context) {
-                $command .= ";{$context}";
-            } else {
-                $command .= ";subtree";
             }
 
             return $command;

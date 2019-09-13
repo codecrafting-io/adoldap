@@ -43,8 +43,8 @@ class AdoLDAPConfiguration
         // Whether or not to use SSL when connecting to your host.
         'ssl' => false,
 
-        // Whether or not to automatic bind to the provided host and BaseDN
-        'autoBind' => true,
+        // Whether or not to automaticly connect with the LDAP Provider
+        'autoConnect' => true,
 
         //Timeout of connection execution in seconds
         'timeout' => 30,
@@ -58,9 +58,7 @@ class AdoLDAPConfiguration
         //Whether or not to return container values with only the name
         'containerNameOnly' => true,
 
-        //Whether or not to bing to logged user DC
-        'bindToLogonServer' => false,
-
+        //Type of parser
         'parser' => Parser::class
     ];
 

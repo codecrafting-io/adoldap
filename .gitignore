@@ -1,4 +1,5 @@
 docs/
 vendor/
+.vscode/
 composer.lock
 .DS_Store

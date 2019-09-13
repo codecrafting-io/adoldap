@@ -12,7 +12,7 @@ class SQLDialect extends DialectInterface
     /**
      * {@inheritdoc}
      */
-    public function getCommand($filter, $attributes, string $context = null)
+    public function getCommand($filter, $attributes)
     {
         if ((is_array($attributes) || is_string($attributes)) && ! empty($attributes)) {
             $adPath = parent::PROTOCOL;
@@ -28,7 +28,7 @@ class SQLDialect extends DialectInterface
             $adPath .= '/' . $this->baseDn;
             $attributes = implode(',', $attributes);
 
-            return "SELECT {$attributes} FROM '{$adPath}' WHERE {$filter} {$context}";
+            return "SELECT {$attributes} FROM '{$adPath}' WHERE {$filter}";
         } else {
             throw new DialectException('attributes must be a string or array and not empty');
         }

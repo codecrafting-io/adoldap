@@ -6,12 +6,27 @@ use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 use InvalidArgumentException;
 
 /**
- * Class ADODBConnection.
+ * Class AdodbConnection.
  *
  * Abstracts the ADO connection to LDAP with ADsDSOObject provider
  */
-class ADODBConnection
+class AdodbConnection
 {
+    /**
+     * Base search scope
+     */
+    const ADS_SCOPE_BASE = 0;
+
+    /**
+     * One level search scope
+     */
+    const ADS_SCOPE_ONELEVEL = 1;
+
+    /**
+     * Subtree search scope
+     */
+    const ADS_SCOPE_SUBTREE = 2;
+
     /**
      * The connection status
      *
@@ -67,7 +82,7 @@ class ADODBConnection
                 $this->connection->Properties['Password'] = $password;
                 $this->connection->Properties['Encrypt Password'] = true;
             }
-            $this->connection->open();
+            $this->connection->open('Active Directory Provider');
             $this->connected = true;
         }
 
@@ -101,7 +116,7 @@ class ADODBConnection
     /**
      * Get maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
      *
-     * @return  integer
+     * @return  int
      */
     public function getPageSize()
     {
@@ -111,11 +126,11 @@ class ADODBConnection
     /**
      * Set maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
      *
-     * @param  integer  $pageSize  Maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
+     * @param  int  $pageSize  Maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
      * @throws InvalidArgumentException if pageSize is lower than 1
      * @return  self
      */
-    public function setPageSize($pageSize)
+    public function setPageSize(int $pageSize)
     {
         if ($pageSize >= 0) {
             $this->pageSize = $pageSize;
@@ -162,27 +177,51 @@ class ADODBConnection
      * If successful, returns a VARIANT (type 9) for COM _ResultSet interface
      *
      * @param string $command
-     * @throws ConnectionException When there's no connection established or
-     * @return \VARIANT
+     * @param int $scope The execution LDAP scope. Must be 0 - base, 1 - onelevel, 2 - subtree
+     * @throws ConnectionException|AdodbException When there's no connection established, invalid scope or execution failed
+     * @return void
      */
-    public function execute(string $command, int $limit = 0)
+    public function execute(string $command, int $scope = self::ADS_SCOPE_SUBTREE)
     {
         if ($this->connected) {
-            try {
-                $adodbCommand = new \COM("ADODB.Command");
-                $adodbCommand->ActiveConnection = $this->connection;
-                $adodbCommand->CommandText = $command;
-                $adodbCommand->Properties['Timeout'] = $this->timeout;
-                if ($this->pageSize > 0) {
-                    $adodbCommand->Properties['Page Size'] = $this->pageSize;
-                }
+            if($this->isScopeValid($scope)) {
+                try {
+                    $adodbCommand = new \COM('ADODB.Command');
+                    $adodbCommand->ActiveConnection = $this->connection;
+                    $adodbCommand->CommandText = $command;
+                    $adodbCommand->Properties['Timeout'] = $this->timeout;
+                    if ($this->pageSize > 0) {
+                        $adodbCommand->Properties['Page Size'] = $this->pageSize;
+                    }
+                    if ($scope != self::ADS_SCOPE_SUBTREE) {
+                        $adodbCommand->Properties['SearchScope'] = $scope;
+                    }
 
-                return $adodbCommand->execute();
-            } catch (\com_exception $e) {
-                throw new ExecutionException("Failed to execute command {$command}", $e->getCode(), $e);
+                    return $adodbCommand->execute();
+                } catch (\com_exception $e) {
+                    throw new AdodbException("Failed to execute command {$command}", $e->getCode(), $e);
+                }
+            } else {
+                $scope = ($scope === null) ? 'null' : $scope;
+                throw new AdodbException("Invalid scope {$scope}");
             }
         } else {
-            throw new ConnectionException("Invalid operation. No connection established");
+            throw new ConnectionException('Invalid operation. No connection established');
         }
+    }
+
+    /**
+     * Check if scope is valid
+     *
+     * @param int $scope
+     * @return bool
+     */
+    public function isScopeValid(int $scope)
+    {
+        if (! $scope !== null && ($scope == self::ADS_SCOPE_BASE || $scope == self::ADS_SCOPE_ONELEVEL || $scope == self::ADS_SCOPE_SUBTREE)) {
+            return true;
+        }
+
+        return false;
     }
 }
