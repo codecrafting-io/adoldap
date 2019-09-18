@@ -82,11 +82,9 @@ interface ProviderInterface
     /**
      * Connect and bind to the domain controller using the current configuration
      *
-     * @param string|null $username
-     * @param string|null $password
      * @return self
      */
-    public function connect($username = null, $password = null);
+    public function connect();
 
     /**
      * Search entries on LDAP BASE DN with the provided configuration

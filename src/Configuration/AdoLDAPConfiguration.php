@@ -66,14 +66,11 @@ class AdoLDAPConfiguration
      * Constructor.
      *
      * @param array $options
-     *
      * @throws ConfigurationException When an option value given is an invalid type.
      */
     public function __construct(array $options = [])
     {
-        foreach ($options as $key => $value) {
-            $this->set($key, $value);
-        }
+        $this->setAll($options);
     }
 
     /**
@@ -84,14 +81,33 @@ class AdoLDAPConfiguration
      *
      * @param string $key
      * @param mixed  $value
-     *
      * @throws ConfigurationException When an option value given is an invalid type.
+     * @return self
      */
+
     public function set($key, $value)
     {
         if ($this->validate($key, $value)) {
             $this->options[$key] = $value;
         }
+
+        return $this;
+    }
+
+    /**
+     * Sets all configuration
+     *
+     * @param array $options
+     * @throws ConfigurationException When an option value given is an invalid type.
+     * @return self
+     */
+    public function setAll(array $options = [])
+    {
+        foreach ($options as $key => $value) {
+            $this->set($key, $value);
+        }
+
+        return $this;
     }
 
     /**

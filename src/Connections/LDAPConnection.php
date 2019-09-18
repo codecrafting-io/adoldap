@@ -75,7 +75,6 @@ class LDAPConnection
      * Set connection timeout in seconds
      *
      * @param  int  $timeout  Connection timeout in seconds
-     *
      * @return  self
      */
     public function setTimeout(int $timeout)
@@ -118,6 +117,7 @@ class LDAPConnection
         if (! $this->defaultNamingContext) {
             $this->defaultNamingContext = $this->adodbConnection->getDefaultNamingContext();
         }
+
         return $this->defaultNamingContext;
     }
 
@@ -189,7 +189,7 @@ class LDAPConnection
     }
 
     /**
-      * Get the principal domain suffix name
+      * Get the principal domain suffix name. Does not required to be connected
       *
       * @throws AdoLDAPException if failed to execute dns discover through dns_get_record
       * @return string
@@ -210,25 +210,22 @@ class LDAPConnection
     }
 
     /**
-     * Get machine domain name
+     * Get machine domain name. Does not required to be connected
      *
      * @return  string
      */
     public function getDomainName()
     {
         if (! $this->domainName) {
-            if (isset($_SERVER['USERDOMAIN'])) {
-                $this->domainName = $_SERVER['USERDOMAIN'];
-            } else {
-                $this->domainName = exec('echo %userdomain%');
-            }
+            $this->domainName = $_SERVER['USERDOMAIN'] ?? exec('echo %userdomain%');
         }
 
         return $this->domainName;
     }
 
     /**
-     * Get the primary domain controllers
+     * Get the primary domain controllers. Does not required to be connected.
+     *
      * @throws ConnectionException if failed to execute a shell nltest
      * @return array
      */
@@ -251,7 +248,8 @@ class LDAPConnection
     }
 
     /**
-     * Get the domain controller which is currently logged. Only works if script user is logged to AD machine
+     * Get the domain controller which is currently logged. Only works if script user is logged to AD machine.
+     * Does not required to be connected.
      *
      * @throws ConnectionException if failed to obtain the logonserver.
      * @return string|null
@@ -267,7 +265,7 @@ class LDAPConnection
     }
 
     /**
-     * Get the current connected DC of the machine
+     * Get the current connected DC of the machine. Does not required to be connected.
      *
      * @throws ConnectionException if failed to execute nltest
      * @return string|null
