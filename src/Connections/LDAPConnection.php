@@ -2,14 +2,7 @@
 
 namespace CodeCrafting\AdoLDAP\Connections;
 
-use InvalidArgumentException;
 use CodeCrafting\AdoLDAP\AdoLDAPException;
-use CodeCrafting\AdoLDAP\Parsers\ParserInterface as Parser;
-use CodeCrafting\AdoLDAP\Dialects\DialectInterface as Dialect;
-use CodeCrafting\AdoLDAP\Configuration\AdoLDAPConfiguration;
-use CodeCrafting\AdoLDAP\Configuration\ConfigurationException;
-use CodeCrafting\AdoLDAP\Dialects\SQLDialect;
-use CodeCrafting\AdoLDAP\Query\ResultSetIterator;
 
 /**
  * Class LDAPConnection.

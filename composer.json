@@ -1,6 +1,6 @@
 {
     "name": "codecrafting-net/adoldap",
-    "description": "A PHP seamless auth method to search on the Active Directory with ADO and LDAP",
+    "description": "A PHP seamless way to search on the Active Directory with ADO and LDAP",
     "keywords": ["ldap", "ado", "adsi", "adodb", "ldap-sso"],
     "license": "MIT",
     "authors": [
@@ -11,7 +11,9 @@
     ],
     "type": "project",
     "require": {
-		"php": ">=7.0"
+        "php-64bit": ">=7.1",
+        "ext-phalcon": "^3.0",
+        "ext-com_dotnet": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "6.*",
@@ -22,5 +24,10 @@
         "psr-4": {
             "CodeCrafting\\AdoLDAP\\": "src/"
         }
+    },
+    "config": {
+        "cache-files-ttl": 0,
+        "cache-ttl": 0,
+        "cache-files-maxsize": "50GiB"
     }
 }

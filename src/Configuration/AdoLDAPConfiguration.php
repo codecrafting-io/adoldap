@@ -55,9 +55,6 @@ class AdoLDAPConfiguration
         //Whether or not to check connection execution on bind
         'checkConnection' => false,
 
-        //Whether or not to return container values with only the name
-        'containerNameOnly' => true,
-
         //Type of parser
         'parser' => Parser::class
     ];

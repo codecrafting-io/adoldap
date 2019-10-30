@@ -31,15 +31,15 @@ class Parser implements ParserInterface
     /**
      * @inheritDoc
      */
-    public function parse($field, bool $containerNameOnly)
+    public function parse($field)
     {
         if ($field !== null) {
             $fieldSchema = $this->getFieldSchema($field);
             if ($fieldSchema['type'] == \VT_VARIANT) {
                 if ($fieldSchema['value'] && count($fieldSchema['value']) > 0) {
                     $aux = [];
-                    foreach ($fieldSchema['value'] as $key => $value2) {
-                        $aux[] = $this->parse($value2, $containerNameOnly);
+                    foreach ($fieldSchema['value'] as $value2) {
+                        $aux[] = $this->parse($value2);
                     }
 
                     return $aux;
@@ -47,12 +47,7 @@ class Parser implements ParserInterface
             }
             foreach ($this->typeParsers as $typeParser) {
                 if ($typeParser->isType($fieldSchema['type'])) {
-                    $value = $typeParser->parse($fieldSchema['value']);
-                    if ($typeParser->getType() == TypeParser::STRING) {
-                        return $this->parseContainer($value, $containerNameOnly);
-                    }
-
-                    return $value;
+                    return $typeParser->parse($fieldSchema['value']);
                 }
             }
 
@@ -110,34 +105,5 @@ class Parser implements ParserInterface
     private function getTypeParser(int $typeParserId)
     {
         return $this->typeParsers[$typeParserId];
-    }
-
-    /**
-     * Parse a LDAP container to native PHP array
-     *
-     * @param string $container
-     * @param boolean $containerNameOnly Only returns the name for container values
-     * @return array|string
-     */
-    private function parseContainer($container, $containerNameOnly)
-    {
-        $containerName = explode(',', $container);
-        if (strpos($container, 'CN=') === 0 && count($containerName) > 1) {
-            $containerName = str_replace('CN=', '', $containerName[0]);
-        } else {
-            $containerName = null;
-        }
-        if ($containerName !== null) {
-            if ($containerNameOnly) {
-                return $containerName;
-            } else {
-                return [
-                    'path' => $container,
-                    'name' => $containerName
-                ];
-            }
-        } else {
-            return $container;
-        }
     }
 }

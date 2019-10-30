@@ -2,8 +2,6 @@
 
 namespace CodeCrafting\AdoLDAP\Parsers\Types;
 
-use DateTime;
-
 /**
  * Class FileTimeParser.
  *

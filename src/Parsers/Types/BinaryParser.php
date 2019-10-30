@@ -91,7 +91,7 @@ class BinaryParser extends TypeParser
     private function decodeBinary($bin)
     {
         $strBin = '';
-        foreach ($bin as $key => $value) {
+        foreach ($bin as $value) {
             $strBin .= pack('c', $value);
         }
 

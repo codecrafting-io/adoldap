@@ -18,13 +18,6 @@ class ResultSetIterator implements SeekableIterator, Countable
     const RESULTSET_STATUS_OPEN = 1;
 
     /**
-     * Only returns the name for container values
-     *
-     * @var bool
-     */
-    private $containerNameOnly = true;
-
-    /**
      * Total number of elements of all pages
      *
      * @var int
@@ -44,6 +37,13 @@ class ResultSetIterator implements SeekableIterator, Countable
      * @var \VARIANT
      */
     private $rs;
+
+    /**
+     * Event triggered after fetch a current element
+     *
+     * @var \Closure
+     */
+    private $afterFetchListener;
 
     /**
      * Constructor
@@ -74,30 +74,6 @@ class ResultSetIterator implements SeekableIterator, Countable
     }
 
     /**
-     * Get only returns the name for container values
-     *
-     * @return  bool
-     */
-    public function getContainerNameOnly()
-    {
-        return $this->containerNameOnly;
-    }
-
-    /**
-     * Set only returns the name for container values
-     *
-     * @param  bool  $containerNameOnly  Only returns the name for container values
-     *
-     * @return  self
-     */
-    public function setContainerNameOnly(bool $containerNameOnly)
-    {
-        $this->containerNameOnly = $containerNameOnly;
-
-        return $this;
-    }
-
-    /**
      * Seeks to a given position. Starts from 0
      *
      * @param int $position
@@ -121,6 +97,23 @@ class ResultSetIterator implements SeekableIterator, Countable
     }
 
     /**
+     * Sets a afterFetch listener to handle data after a current operation
+     *
+     * @param \Closure $afterFetchListener
+     * @return self
+     */
+    public function afterFetch(\Closure $afterFetchListener)
+    {
+        if ($afterFetchListener) {
+            $this->afterFetchListener = $afterFetchListener;
+        } else {
+            new InvalidArgumentException('afterFetch must no be null');
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns the current element
      *
      * @return array|null
@@ -130,11 +123,11 @@ class ResultSetIterator implements SeekableIterator, Countable
         if ($this->valid()) {
             $current = [];
             foreach ($this->rs->fields as $key => $field) {
-                if ($field->name == 'distinguishedName') {
-                    $current[$field->name] = $this->parser->parse($field, false);
-                } else {
-                    $current[$field->name] = $this->parser->parse($field, $this->containerNameOnly);
-                }
+                $current[$field->name] = $this->parser->parse($field);
+            }
+            $listener = $this->afterFetchListener;
+            if ($listener) {
+                return $listener($current);
             }
 
             return $current;

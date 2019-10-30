@@ -35,6 +35,8 @@ class StringParser extends TypeParser
      */
     public function parse($value)
     {
-        return utf8_encode(strval($value));
+        return preg_replace_callback('/\\\([0-9A-Fa-f]{2})/', function ($matches) {
+            return chr(hexdec($matches[1]));
+        }, utf8_encode(strval($value)));
     }
 }
