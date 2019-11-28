@@ -5,9 +5,9 @@ namespace CodeCrafting\AdoLDAP;
 use InvalidArgumentException;
 use CodeCrafting\AdoLDAP\AdoLDAPException;
 use CodeCrafting\AdoLDAP\Dialects\SQLDialect;
+use CodeCrafting\AdoLDAP\Query\SearchFactory;
 use CodeCrafting\AdoLDAP\Parsers\ParserInterface;
-use CodeCrafting\AdoLDAP\Query\ResultSetIterator;
-use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
+use CodeCrafting\AdoLDAP\Connections\AdodbException;
 use CodeCrafting\AdoLDAP\Connections\LDAPConnection;
 use CodeCrafting\AdoLDAP\Connections\AdodbConnection;
 use CodeCrafting\AdoLDAP\Connections\ProviderInterface;
@@ -36,13 +36,6 @@ class AdoLDAP implements ProviderInterface
     protected $connection;
 
     /**
-     * Dialect search syntax for the ADSI
-     *
-     * @var DialectInterface
-     */
-    protected $dialect;
-
-    /**
      * ResultSet data parser
      *
      * @var ParserInterface
@@ -63,7 +56,7 @@ class AdoLDAP implements ProviderInterface
                 $this->connect($this->configuration->get('username'), $this->configuration->get('password'));
             }
         } else {
-            throw new AdoLDAPException('Current environment is not a Windows system or did not loaded COM extension');
+            throw new AdoLDAPException('Current environment must be a Windows system with 64 bit PHP with COM extension loaded');
         }
     }
 
@@ -76,9 +69,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Gets the current ldap connection
-     *
-     * @return LDAPConnection
+     * @inheritDoc
      */
     public function getConnection()
     {
@@ -86,9 +77,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Sets the current connection
-     *
-     * @return self
+     * @inheritDoc
      */
     protected function setConnection()
     {
@@ -98,9 +87,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Gets the current configuration
-     *
-     * @return AdoLDAPConfiguration
+     * @inheritDoc
      */
     public function getConfiguration()
     {
@@ -108,11 +95,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Sets the current configuration
-     *
-     * @param  AdoLDAPConfiguration|array  $configuration  The provider configuration
-     * @throws CodeCrafting\AdoLDAP\Configuration\ConfigurationException when configuration is invalid
-     * @return self
+     * @inheritDoc
      */
     public function setConfiguration($configuration = [])
     {
@@ -124,15 +107,8 @@ class AdoLDAP implements ProviderInterface
         }
         if ($configuration instanceof AdoLDAPConfiguration) {
             $this->configuration = $configuration;
-            $dialectClass = $this->configuration->get('dialect');
-            $this->dialect = new $dialectClass();
-            $this->dialect->setHost($this->configuration->get('host'));
-            $this->dialect->setPort($this->configuration->get('port'));
-            $this->dialect->setSsl($this->configuration->get('ssl'));
-            $this->dialect->setBaseDn($this->configuration->get('baseDn'));
             $parser = $this->configuration->get('parser');
             $this->parser = new $parser();
-
             return $this;
         }
         $class = AdoLDAPConfiguration::class;
@@ -140,36 +116,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Gets the current dialect
-     *
-     * @return DialectInterface
-     */
-    public function getDialect()
-    {
-        return $this->dialect;
-    }
-
-    /**
-     * Sets the current dialect
-     *
-     * @param DialectInterface $dialect
-     * @return self
-     */
-    public function setDialect(DialectInterface $dialect)
-    {
-        if ($dialect !== null) {
-            $this->dialect = $dialect;
-
-            return $this;
-        } else {
-            throw new InvalidArgumentException('Dialect must not be null');
-        }
-    }
-
-    /**
-     * Gets the current parser
-     *
-     * @return ParserInterface
+     * @inheritDoc
      */
     public function getParser()
     {
@@ -177,9 +124,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Set the current parser
-     *
-     * @return self
+     * @inheritDoc
      */
     public function setParser(ParserInterface $parser)
     {
@@ -193,16 +138,11 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Connect and bind to the domain controller using the current configuration
-     *
-     * @return bool
+     * @inheritDoc
      */
     public function connect()
     {
         if (! $this->connection->isBound()) {
-            if ($this->dialect->isRootDn()) {
-                $this->dialect->setBaseDn($this->connection->getDefaultNamingContext());
-            }
             if ($this->connection->bind($this->getConfiguration()->get('username'), $this->getConfiguration()->get('password'))) {
                 if ($this->configuration->get('checkConnection')) {
                     $this->checkConnection();
@@ -214,39 +154,40 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Search entries on LDAP BASE DN with the provided configuration
-     *
-     * @param string $filter
-     * @param mixed $attributes
-     * @param integer $scope
-     * @return ResultSetIterator
+     * @inheritDoc
      */
-    public function search($filter, $attributes, int $scope = AdodbConnection::ADS_SCOPE_SUBTREE)
+    public function search()
     {
-        $resultSet = $this->connection->search($this->dialect->getCommand($filter, $attributes), $scope);
-        return new ResultSetIterator($resultSet, $this->parser);
+        if ($this->connection->isBound()) {
+            return new SearchFactory($this->connection, $this->configuration, $this->parser);
+        } else {
+            throw new ConnectionException("Connection not established");
+        }
     }
 
     /**
-     * Check the connection
-     *
-     * @return boolean
+     * @inheritDoc
      */
     public function checkConnection()
     {
         if ($this->connection->isBound()) {
-            $result = $this->search('(objectClass=*)', ['ADsPath'], AdodbConnection::ADS_SCOPE_BASE);
+            try {
+                $this->search()
+                    ->setSearchScope(AdodbConnection::ADS_SCOPE_BASE)
+                    ->whereEquals('objectClass', '*')
+                    ->firstOrFail(['ADsPath']);
+            } catch (AdodbException $e) {
+                return false;
+            }
 
-            return ($result != null) ? $result->valid() : false;
+            return true;
         }
 
         return false;
     }
 
     /**
-     * Get the default naming context
-     *
-     * @return string|null
+     * @inheritDoc
      */
     public function getDefaultNamingContext()
     {
@@ -254,10 +195,7 @@ class AdoLDAP implements ProviderInterface
     }
 
     /**
-     * Get overall information about the domains on the current AD
-     *
-     * @throws ConnectionException if is not connected
-     * @return array
+     * @inheritDoc
      */
     public function info()
     {
@@ -286,32 +224,19 @@ class AdoLDAP implements ProviderInterface
     /**
      * Get the domain controllers within the default naming context
      *
+     * @throws AdodbException|ConnectionException if no connection is established or failed to search
      * @return array
      */
-    protected function getDomainControllers()
+    public function getDomainControllers()
     {
         if ($this->connection->isBound()) {
-            $baseDn = $this->dialect->getBaseDn();
-            $this->dialect->setBaseDn('OU=DOMAIN CONTROLLERS,' . $this->connection->getDefaultNamingContext());
-            $result = null;
-            try {
-                $filter = '(objectCategory=Computer)';
-                if ($this->dialect instanceof SQLDialect) {
-                    $filter = "objectCategory = 'Computer'";
-                }
-                $result = $this->search($filter, ['dnsHostName']);
-            } catch (AdodbException $e) {
-                $this->dialect->setBaseDn($baseDn);
-                throw $e;
-            }
-            $controllers = [];
-            if ($result) {
-                $controllers = array_map(function ($controller) {
-                    return strtolower($controller['dnsHostName']);
-                }, $result->getElements());
-            }
+            $controllers = $this->search()->computers()
+                ->from('OU=DOMAIN CONTROLLERS,' . $this->connection->getDefaultNamingContext())
+                ->select(['dnsHostName'])
+                ->get()->afterFetch(function ($entry) {
+                    return strtolower($entry->getAttribute('dnsHostName'));
+                })->getEntries();
             sort($controllers);
-            $this->dialect->setBaseDn($baseDn);
 
             return $controllers;
         } else {
@@ -326,7 +251,7 @@ class AdoLDAP implements ProviderInterface
      */
     public static function isCompatible()
     {
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && class_exists(\COM::class, false)) {
+        if (PHP_INT_SIZE == 8 && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && class_exists(\COM::class, false)) {
             return true;
         }
 

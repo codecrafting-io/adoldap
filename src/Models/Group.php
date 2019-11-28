@@ -10,62 +10,52 @@ use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
  */
 class Group extends Model
 {
-	/**
-	 * Column attributes with the original LDAP name
-	 *
-	 * @var array
-	 */
-	const RAW_ATTRIBUTES = [
-		'objectclass',
-		'distinguishedName',
-		'displayName',
-		'member',
-		'whenCreated',
-		'objectGUID',
-		'objectSID'
-	];
+    /**
+     * Column attributes with the original LDAP name
+     *
+     * @var array
+     */
+    const DEFAULT_ATTRIBUTES = [
+        'objectclass',
+        'distinguishedName',
+        'displayName',
+        'member',
+        'whenCreated',
+        'objectGUID',
+        'objectSID'
+    ];
 
     /**
      * Default objectClass
      *
      * @var ObjectClass
      */
-    private static $defaultClass;
+    private static $objClass;
 
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         if (! $this->objectClass) {
-            $this->setObjectClass(self::defaultClass());
+            $this->setObjectClass(self::objectClass());
         }
-	}
+    }
 
     /**
      * Get default object class
      *
      * @return ObjectClass
      */
-    public static function defaultClass()
+    public static function objectClass()
     {
-        if (! self::$defaultClass) {
-            self::$defaultClass = new ObjectClass([
+        if (! self::$objClass) {
+            self::$objClass = new ObjectClass([
                 'top',
                 'group',
             ]);
         }
 
-        return self::$defaultClass;
+        return self::$objClass;
     }
-
-    /**
-     * Get model map keys
-     *
-     * @return array
-     */
-    public static function getRawAttributes()
-    {
-        return self::RAW_ATTRIBUTES;
-	}
 
     /**
      * Gets the computer's name
@@ -86,7 +76,7 @@ class Group extends Model
     public function setName(string $name)
     {
         return $this->setAttribute('displayName', $name);
-	}
+    }
 
     /**
      * Gets members of the group

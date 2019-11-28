@@ -101,6 +101,28 @@ class LDAPConnection
     }
 
     /**
+     * Get a LDAP object
+     *
+     * @param string $path
+     * @return array
+     */
+    public function getLdapObject(string $path)
+    {
+        $obj = $this->adodbConnection->getLdapObject($path);
+
+        //Load LDAP Schema
+        $obj->GetInfo();
+        $fieldCount = $obj->PropertyCount;
+        $properties = [];
+        for ($i=0; $i < $fieldCount; $i++) {
+            $prop = $obj->Next;
+            $properties[$prop->Name] = $obj->Get($prop->Name);
+        }
+
+        return $properties;
+    }
+
+    /**
      * Get the default naming context
      *
      * @return string
@@ -167,11 +189,11 @@ class LDAPConnection
      * @param int $scope scope of the search within it's search dialect.
      * @return \VARIANT
      */
-    public function search($command, int $scope = AdodbConnection::ADS_SCOPE_SUBTREE)
+    public function search($command, array $properties = [])
     {
         if ($this->bound) {
             try {
-                return $this->adodbConnection->execute($command, $scope);
+                return $this->adodbConnection->execute($command, $properties);
             } catch (ConnectionException $e) {
                 $this->unbind();
                 throw $e;
@@ -228,7 +250,7 @@ class LDAPConnection
         if (! empty($result)) {
             $lines = explode("\n", $result);
             $controllers = [];
-            foreach ($lines as $key => $value) {
+            foreach ($lines as $value) {
                 if (stripos($value, '[PDC]')) {
                     $controllers[] = strtolower(trim(explode('[PDC]', $value)[0]));
                 }

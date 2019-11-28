@@ -3,7 +3,6 @@
 namespace CodeCrafting\AdoLDAP\Connections;
 
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
-use InvalidArgumentException;
 
 /**
  * Class AdodbConnection.
@@ -126,16 +125,14 @@ class AdodbConnection
     /**
      * Set maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
      *
-     * @param  int  $pageSize  Maximum number of objects to return in a results set. @see https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado
-     * @throws InvalidArgumentException if pageSize is lower than 1
+     * @param  int  $pageSize  Maximum number of objects to return in a results set.
+     * @throws AdodbException if pageSize is lower than 0
      * @return  self
      */
     public function setPageSize(int $pageSize)
     {
-        if ($pageSize >= 0) {
+        if ($this->isPageSizeValid($pageSize)) {
             $this->pageSize = $pageSize;
-        } else {
-            throw new InvalidArgumentException('pageSize must not be negative');
         }
 
         return $this;
@@ -149,12 +146,27 @@ class AdodbConnection
      */
     public function getDefaultNamingContext()
     {
-        $rootDse = new \COM(DialectInterface::PROTOCOL . DialectInterface::ROOT_DN);
+        $rootDse = $this->getLdapObject(DialectInterface::ROOT_DN);
         if ($rootDse) {
             return strval($rootDse->Get('defaultNamingContext'));
         } else {
             throw new ConnectionException("Failed to obtain defaultNamingContext");
         }
+    }
+
+    /**
+     * Get a LDAP object
+     *
+     * @param string $path
+     * @return mixed
+     */
+    public function getLdapObject(string $path)
+    {
+        if (stripos($path, DialectInterface::PROTOCOL) === false) {
+            $path = DialectInterface::PROTOCOL . $path;
+        }
+
+        return new \COM($path);
     }
 
     /**
@@ -178,32 +190,22 @@ class AdodbConnection
      *
      * @param string $command
      * @param int $scope The execution LDAP scope. Must be 0 - base, 1 - onelevel, 2 - subtree
+     * @param array $properties The search properties of ADODB.Command
      * @throws ConnectionException|AdodbException When there's no connection established, invalid scope or execution failed
      * @return void
      */
-    public function execute(string $command, int $scope = self::ADS_SCOPE_SUBTREE)
+    public function execute(string $command, array $properties = [])
     {
         if ($this->connected) {
-            if($this->isScopeValid($scope)) {
-                try {
-                    $adodbCommand = new \COM('ADODB.Command');
-                    $adodbCommand->ActiveConnection = $this->connection;
-                    $adodbCommand->CommandText = $command;
-                    $adodbCommand->Properties['Timeout'] = $this->timeout;
-                    if ($this->pageSize > 0) {
-                        $adodbCommand->Properties['Page Size'] = $this->pageSize;
-                    }
-                    if ($scope != self::ADS_SCOPE_SUBTREE) {
-                        $adodbCommand->Properties['SearchScope'] = $scope;
-                    }
-
-                    return $adodbCommand->execute();
-                } catch (\com_exception $e) {
-                    throw new AdodbException("Failed to execute command {$command}", $e->getCode(), $e);
-                }
-            } else {
-                $scope = ($scope === null) ? 'null' : $scope;
-                throw new AdodbException("Invalid scope {$scope}");
+            $defaultProperties['Timeout'] = $this->timeout;
+            $defaultProperties['SearchScope'] = self::ADS_SCOPE_SUBTREE;
+            if ($this->pageSize > 0) {
+                $defaultProperties['Page Size'] = $this->pageSize;
+            }
+            try {
+                return $this->getCommand($command, array_merge($defaultProperties, $properties))->execute();
+            } catch (\com_exception $e) {
+                throw new AdodbException("Failed to execute command {$command}", $e->getCode(), $e);
             }
         } else {
             throw new ConnectionException('Invalid operation. No connection established');
@@ -216,12 +218,55 @@ class AdodbConnection
      * @param int $scope
      * @return bool
      */
-    public function isScopeValid(int $scope)
+    protected function isScopeValid($scope)
     {
-        if (! $scope !== null && ($scope == self::ADS_SCOPE_BASE || $scope == self::ADS_SCOPE_ONELEVEL || $scope == self::ADS_SCOPE_SUBTREE)) {
+        if (! $scope !== null && ($scope === self::ADS_SCOPE_BASE || $scope === self::ADS_SCOPE_ONELEVEL || $scope === self::ADS_SCOPE_SUBTREE)) {
             return true;
         }
 
-        return false;
+        $scope = ($scope === null) ? 'null' : $scope;
+        throw new AdodbException("Invalid scope {$scope}");
+    }
+
+    /**
+     * Check if pageSize is valid
+     *
+     * @param int $pageSize
+     * @throws AdodbException if pageSize is lower than 0
+     * @return bool
+     */
+    public function isPageSizeValid($pageSize)
+    {
+        if (is_int($pageSize) && $pageSize < 0) {
+            throw new AdodbException('pageSize must not be negative');
+        }
+
+        return true;
+    }
+
+    /**
+     * Get a new ADO Command. For all properties available properties check the link
+     *
+     * @link https://docs.microsoft.com/pt-br/sql/ado/guide/appendixes/microsoft-ole-db-provider-for-microsoft-active-directory-service
+     * @param string $command
+     * @param array $properties
+     * @throws AdodbException if Page Size or SearchScope is invalid
+     * @return \COM
+     */
+    protected function getCommand(string $command, array $properties)
+    {
+        $adodbCommand = new \COM('ADODB.Command');
+        $adodbCommand->CommandText = $command;
+        $adodbCommand->ActiveConnection = $this->connection;
+        foreach ($properties as $key => $value) {
+            if ($key == 'SearchScope') {
+                $this->isScopeValid($value);
+            } elseif ($key == 'Page Size') {
+                $this->isPageSizeValid($value);
+            }
+            $adodbCommand->Properties[$key] = $value;
+        }
+
+        return $adodbCommand;
     }
 }

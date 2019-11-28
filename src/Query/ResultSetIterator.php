@@ -39,18 +39,18 @@ class ResultSetIterator implements SeekableIterator, Countable
     private $rs;
 
     /**
-     * Event triggered after fetch a current element
+     * Callbacks to be executed after a current operation
      *
-     * @var \Closure
+     * @var \Closure[]
      */
-    private $afterFetchListener;
+    private $callbacks = [];
 
     /**
      * Constructor
      *
      * @param \VARIANT $resultSet
      * @param Parser $parser
-     * @throws ResultSetPaginatorExcpetion if resultSet is closed
+     * @throws ResultSetIteratorExcpetion if resultSet is closed
      */
     public function __construct(\VARIANT $resultSet, Parser $parser)
     {
@@ -59,7 +59,7 @@ class ResultSetIterator implements SeekableIterator, Countable
             if ($this->isOpened()) {
                 $this->parser = $parser;
             } else {
-                throw new ResultSetPaginatorException('ResultSet is not opened, unable to operate');
+                throw new ResultSetIteratorException('ResultSet is not opened, unable to operate');
             }
         } else {
             throw new InvalidArgumentException('ResultSet must not be null');
@@ -83,13 +83,15 @@ class ResultSetIterator implements SeekableIterator, Countable
     public function seek($position)
     {
         if ($position >= 0) {
-            $key = $this->key();
-            if ($key === null || $key != 0) {
-                $this->rs->MoveFirst();
-            }
-            $this->rs->Move($position);
-            if ($this->key() === null) {
-                throw new OutOfBoundsException("Invalid seek position ({$position})");
+            if ($this->count() > 0) {
+                $key = $this->key();
+                if ($key === null || $key != 0) {
+                    $this->rs->MoveFirst();
+                }
+                $this->rs->Move($position);
+                if ($this->key() === null) {
+                    throw new OutOfBoundsException("Invalid seek position ({$position})");
+                }
             }
         } else {
             throw new OutOfBoundsException("Invalid seek position ({$position})");
@@ -97,37 +99,33 @@ class ResultSetIterator implements SeekableIterator, Countable
     }
 
     /**
-     * Sets a afterFetch listener to handle data after a current operation
+     * Sets a afterFetch callback to handle data after a current operation
      *
-     * @param \Closure $afterFetchListener
+     * @param \Closure $afterFetchCallback
      * @return self
      */
-    public function afterFetch(\Closure $afterFetchListener)
+    public function afterFetch(\Closure $afterFetchCallback)
     {
-        if ($afterFetchListener) {
-            $this->afterFetchListener = $afterFetchListener;
+        if ($afterFetchCallback) {
+            $this->callbacks[] = $afterFetchCallback;
         } else {
-            new InvalidArgumentException('afterFetch must no be null');
+            new InvalidArgumentException('afterFetch must not be null');
         }
 
         return $this;
     }
 
     /**
-     * Returns the current element
+     * Returns the current element. Values can be altered by callbacks
      *
-     * @return array|null
+     * @return mixed|null
      */
     public function current()
     {
         if ($this->valid()) {
-            $current = [];
-            foreach ($this->rs->fields as $key => $field) {
-                $current[$field->name] = $this->parser->parse($field);
-            }
-            $listener = $this->afterFetchListener;
-            if ($listener) {
-                return $listener($current);
+            $current = $this->parser->parseEntry($this->rs->fields);
+            foreach ($this->callbacks as $callback) {
+                $current = $callback($current);
             }
 
             return $current;
@@ -209,7 +207,9 @@ class ResultSetIterator implements SeekableIterator, Countable
     public function count()
     {
         if ($this->elementCount == -1) {
-            $this->rs->MoveLast();
+            if ($this->rs->RecordCount > 0) {
+                $this->rs->MoveLast();
+            }
             $this->elementCount = $this->rs->RecordCount;
         }
 
@@ -219,12 +219,12 @@ class ResultSetIterator implements SeekableIterator, Countable
     /**
      * Retrieve and parse the elements from a result set
      *
-     * @param integer $offset
      * @param integer $limit
+     * @param integer $offset
      * @throws OutOfBoundsException if resultSet, limit or offset is invalid
      * @return array|null
      */
-    public function getElements(int $offset = 0, int $limit = 0)
+    public function getEntries(int $limit = 0, int $offset = 0)
     {
         if ($limit >= 0) {
             $size = 0;

@@ -9,10 +9,17 @@ abstract class TypeParser
 {
     const INT = 0;
     const STRING = 1;
-    const FILETIME = 2;
+    const OBJECT = 2;
     const BINARY = 3;
     const DATE = 4;
     const BOOLEAN = 5;
+
+    /**
+     * Available TypeParsers
+     *
+     * @var TypeParser[]
+     */
+    private static $parsers = [];
 
     /**
      * Get the compatible ADO data types
@@ -58,14 +65,27 @@ abstract class TypeParser
      */
     public static function getParsers()
     {
-        $oClass = new \ReflectionClass(__CLASS__);
-        $constants = $oClass->getConstants();
-        $parsers = [];
-        foreach ($constants as $key => $value) {
-            $className = __NAMESPACE__ . '\\' . str_replace('_', '', ucwords(strtolower($key), '_')) . 'Parser';
-            $parsers[$value] = new $className();
+        if (! self::$parsers) {
+            $oClass = new \ReflectionClass(__CLASS__);
+            $constants = $oClass->getConstants();
+            foreach ($constants as $key => $value) {
+                $className = __NAMESPACE__ . '\\' . str_replace('_', '', ucwords(strtolower($key), '_')) . 'Parser';
+                self::$parsers[$value] = new $className();
+            }
         }
 
-        return $parsers;
+
+        return self::$parsers;
+    }
+
+    /**
+     * Get the parser by a Parser constant ID
+     *
+     * @param integer $typeParserId
+     * @return TypeParser
+     */
+    public static function getTypeParser(int $typeParserId)
+    {
+        return self::getParsers()[$typeParserId];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace CodeCrafting\AdoLDAP\Models;
 
+use CodeCrafting\AdoLDAP\Parsers\Types\DateParser;
 use CodeCrafting\AdoLDAP\Models\Attributes\Address;
 use CodeCrafting\AdoLDAP\Models\Attributes\ObjectClass;
 use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
@@ -16,7 +17,7 @@ class User extends Model
      *
      * @var array
      */
-    const RAW_ATTRIBUTES = [
+    const DEFAULT_ATTRIBUTES = [
         'objectclass',
         'distinguishedName',
         'sAMAccountName',
@@ -53,7 +54,7 @@ class User extends Model
      *
      * @var ObjectClass
      */
-    private static $defaultClass;
+    private static $objClass;
 
     /**
      * User addresss
@@ -66,7 +67,7 @@ class User extends Model
     {
         parent::__construct($attributes);
         if (! $this->objectClass) {
-            $this->setObjectClass(self::defaultClass());
+            $this->setObjectClass(self::objectClass());
         }
         $this->getAddress();
         if ($this->hasAttribute('description')) {
@@ -82,10 +83,10 @@ class User extends Model
      *
      * @return ObjectClass
      */
-    public static function defaultClass()
+    public static function objectClass()
     {
-        if (! self::$defaultClass) {
-            self::$defaultClass = new ObjectClass([
+        if (! self::$objClass) {
+            self::$objClass = new ObjectClass([
                 'top',
                 'person',
                 'organizationalPerson',
@@ -93,38 +94,28 @@ class User extends Model
             ]);
         }
 
-        return self::$defaultClass;
+        return self::$objClass;
     }
 
     /**
-     * Get model map keys
-     *
-     * @return array
-     */
-    public static function getRawAttributes()
-    {
-        return self::RAW_ATTRIBUTES;
-    }
-
-    /**
-     * Gets user's login name, aka sAMAccountName
+     * Gets user's account, aka sAMAccountName
      *
      * @return void
      */
-    public function getLogin()
+    public function getAccount()
     {
         return strtolower($this->getAttribute('sAMAccountName'));
     }
 
     /**
-     * Sets user's login name, aka sAMAccountName
+     * Sets user's account name, aka sAMAccountName
      *
      * @param string $value
      * @return self
      */
-    public function setLogin(string $login)
+    public function setAccount(string $account)
     {
-        return $this->setAttribute('sAMAccountName', strtolower($login));
+        return $this->setAttribute('sAMAccountName', strtolower($account));
     }
 
     /**
@@ -598,7 +589,12 @@ class User extends Model
      */
     public function getLockoutTime()
     {
-        return $this->getAttribute('lockoutTime');
+        $lockout = $this->getAttribute('lockoutTime');
+        if ($lockout == DateParser::getLdapDtStart()) {
+            return 0;
+        }
+
+        return $lockout;
     }
 
     /**

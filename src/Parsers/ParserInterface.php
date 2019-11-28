@@ -2,6 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Parsers;
 
+use CodeCrafting\AdoLDAP\Models\Entry;
+
 /**
  * Interface ParserInterface.
  */
@@ -13,5 +15,13 @@ interface ParserInterface
      * @param mixed $field
      * @return void
      */
-    public function parse($field);
+    public function parseField($field);
+
+    /**
+     * Parse a resultset entry
+     *
+     * @param \VARIANT $entry
+     * @return Entry
+     */
+    public function parseEntry($entry);
 }

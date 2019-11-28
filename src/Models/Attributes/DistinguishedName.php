@@ -2,6 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Models\Attributes;
 
+use CodeCrafting\AdoLDAP\Parsers\Types\StringParser;
+
 /**
  * Class DistinguishedName.
  */
@@ -70,7 +72,7 @@ class DistinguishedName
         foreach ($path as $rdn) {
             $pieces = explode('=', $rdn) ?: [];
             if (count($pieces) == 2) {
-                $this->addComponent($pieces[0], $pieces[1]);
+                $this->addComponent($pieces[0], StringParser::unescape($pieces[1]));
             }
         }
 
@@ -100,8 +102,7 @@ class DistinguishedName
     {
         if (is_null($component)) {
             return $this->components;
-        }
-        elseif( $this->validateComponent($component)) {
+        } elseif ($this->validateComponent($component)) {
             return $this->components[$component];
         }
 
@@ -209,7 +210,7 @@ class DistinguishedName
         foreach ($path as $rdn) {
             $pieces = explode('=', $rdn) ?: [];
             if (count($pieces) == 2 && strtoupper($pieces[0]) == $component) {
-                $components[] = $pieces[1];
+                $components[] = StringParser::unescape($pieces[1]);
             }
         }
 

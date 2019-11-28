@@ -2,9 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Connections;
 
+use CodeCrafting\AdoLDAP\Query\SearchFactory;
 use CodeCrafting\AdoLDAP\Parsers\ParserInterface;
-use CodeCrafting\AdoLDAP\Query\ResultSetIterator;
-use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 
 /**
  * Interface ProviderInterface.
@@ -44,21 +43,6 @@ interface ProviderInterface
     public function setConfiguration($configuration = []);
 
     /**
-     * Gets the current dialect
-     *
-     * @return DialectInterface
-     */
-    public function getDialect();
-
-    /**
-     * Sets the current dialect
-     *
-     * @param DialectInterface $dialect
-     * @return self
-     */
-    public function setDialect(DialectInterface $dialect);
-
-    /**
      * Gets the current parser
      *
      * @return ParserInterface
@@ -87,14 +71,11 @@ interface ProviderInterface
     public function connect();
 
     /**
-     * Search entries on LDAP BASE DN with the provided configuration
+     * Gets a new SearchFactory instance
      *
-     * @param string $filter
-     * @param mixed $attributes
-     * @param integer $scope
-     * @return ResultSetIterator
+     * @return SearchFactory
      */
-    public function search($filter, $attributes, int $scope = AdodbConnection::ADS_SCOPE_SUBTREE);
+    public function search();
 
     /**
      * Get the default naming context

@@ -2,8 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Models;
 
-use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
 use CodeCrafting\AdoLDAP\Models\Attributes\ObjectClass;
+use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
 
 /**
  * Class model.
@@ -80,7 +80,7 @@ class Model extends Entry
      * @param  ObjectClass|array $objectClass  Object class of the model
      * @return  self
      */
-    public function setObjectClass($objectClass)
+    protected function setObjectClass($objectClass)
     {
         if (is_object($objectClass) && $objectClass instanceof ObjectClass) {
             $this->objectClass = $objectClass;

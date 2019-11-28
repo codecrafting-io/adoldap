@@ -2,6 +2,8 @@
 
 namespace CodeCrafting\AdoLDAP\Dialects;
 
+use CodeCrafting\AdoLDAP\Query\QueryBuilder;
+
 /**
  * ADSI Dialect interface for binding and searching
  */
@@ -32,6 +34,8 @@ abstract class DialectInterface
      * the defaultNamingContext
      */
     const ROOT_DN = 'RootDSE';
+
+    const MEMBEROF_OID = 'memberof:1.2.840.113556.1.4.1941:';
 
     /**
      * The LDAP connection host
@@ -167,12 +171,95 @@ abstract class DialectInterface
         return $this;
     }
 
+    public function getMemberOfOID()
+    {
+        return self::MEMBEROF_OID;
+    }
+
     /**
-     * Get a Command string to be executed within a AdodbConnection
+     * Get Command query key order
      *
-     * @param mixed $filter the filter conditions within the dialect
-     * @param array|string $attributes
+     * @return array
+     */
+    abstract public function getCommandOrder();
+
+    /**
+     * Get Command query key separator
+     *
      * @return string
      */
-    abstract public function getCommand($filter, $attributes);
+    abstract public function getCommandSeparator();
+
+    /**
+     * Compile query command filters
+     *
+     * @param array $filters
+     * @return string
+     */
+    abstract public function compileFilters(array $filters);
+
+    /**
+     * Compile query command attributes
+     *
+     * @param array $attributes
+     * @return string
+     */
+    abstract public function compileSelect(array $attributes);
+
+    /**
+     * Compile query command from
+     *
+     * @return string
+     */
+    abstract public function compileFrom();
+
+    /**
+     * Escape a string for use in an LDAP filter or DN
+     *
+     * @param string $value
+     * @param int|null $flag
+     * @return string
+     */
+    abstract public function escapeValue($value, $flag = null);
+
+    /**
+     * Escape a LDAP query identifier string
+     *
+     * @param string $identifier
+     * @return string
+     */
+    abstract public function escapeIdentifier($identifier);
+
+    /**
+     * Get command compiled key parts
+     *
+     * @param QueryBuilder $builder
+     * @return array
+     */
+    protected function getCommand(QueryBuilder $builder)
+    {
+        return [
+            'SELECT'    => $this->compileSelect($builder->getSelects()),
+            'FROM'      => $this->compileFrom(),
+            'FILTERS'   => $this->compileFilters($builder->getFilters())
+        ];
+    }
+
+    /**
+     * Compiles the Builder instance into an LDAP query string command to be within a AdodbConnection.
+     *
+     * @param QueryBuilder $filter the filter conditions within the dialect
+     * @return string
+     */
+    public function compileCommand(QueryBuilder $builder)
+    {
+        $command = $this->getCommand($builder);
+        return implode($this->getCommandSeparator(), array_map(function ($key) use ($command) {
+            if (array_key_exists($key, $command)) {
+                return $command[$key];
+            } else {
+                throw new DialectException("Command key '{$key}' does not exists");
+            }
+        }, $this->getCommandOrder()));
+    }
 }

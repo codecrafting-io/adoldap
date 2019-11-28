@@ -12,7 +12,7 @@ class BinaryParser extends TypeParser
     /**
      * ADO compatibile types
      */
-    const ADO_TYPES = [204];
+    const ADO_TYPES = [204, 8209];
 
     /**
      * @inheritDoc
@@ -76,7 +76,7 @@ class BinaryParser extends TypeParser
         // Get revision, indentifier, authority
         $parts = unpack('Crev/x/nidhigh/Nidlow', $binSid);
         // Set revision, indentifier, authority
-        $sid = sprintf('S-%u-%d',  $parts['rev'], ($parts['idhigh']<<32) + $parts['idlow']);
+        $sid = sprintf('S-%u-%d', $parts['rev'], ($parts['idhigh']<<32) + $parts['idlow']);
         // Translate domain
         $parts = unpack('x8/V*', $binSid);
         // Append if parts exists

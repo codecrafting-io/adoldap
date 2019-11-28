@@ -3,6 +3,7 @@
 namespace CodeCrafting\AdoLDAP\Models;
 
 use CodeCrafting\AdoLDAP\Models\Attributes\OS;
+use CodeCrafting\AdoLDAP\Models\Attributes\ObjectClass;
 use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
 
 /**
@@ -15,7 +16,7 @@ class Computer extends Model
      *
      * @var array
      */
-    const RAW_ATTRIBUTES = [
+    const DEFAULT_ATTRIBUTES = [
         'objectclass',
         'distinguishedName',
         'name',
@@ -32,7 +33,7 @@ class Computer extends Model
      *
      * @var ObjectClass
      */
-    private static $defaultClass;
+    private static $objClass;
 
     /**
      * Operating System
@@ -45,7 +46,7 @@ class Computer extends Model
     {
         parent::__construct($attributes);
         if (! $this->objectClass) {
-            $this->setObjectClass(self::defaultClass());
+            $this->setObjectClass(self::objectClass());
         }
         $this->getOS();
     }
@@ -55,10 +56,10 @@ class Computer extends Model
      *
      * @return ObjectClass
      */
-    public static function defaultClass()
+    public static function objectClass()
     {
-        if (! self::$defaultClass) {
-            self::$defaultClass = new ObjectClass([
+        if (! self::$objClass) {
+            self::$objClass = new ObjectClass([
                 'top',
                 'person',
                 'organizationalPerson',
@@ -67,17 +68,7 @@ class Computer extends Model
             ]);
         }
 
-        return self::$defaultClass;
-    }
-
-    /**
-     * Get model map keys
-     *
-     * @return array
-     */
-    public static function getRawAttributes()
-    {
-        return self::RAW_ATTRIBUTES;
+        return self::$objClass;
     }
 
     /**

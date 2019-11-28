@@ -127,10 +127,20 @@ class Entry
     public function isEmpty(string $key)
     {
         if ($this->hasAttribute($key)) {
-           return is_null($this->getAttribute($key));
+            return is_null($this->getAttribute($key));
         }
 
         return true;
+    }
+
+    /**
+     * Check whether or not the entry only has a adspath attribute
+     *
+     * @return boolean
+     */
+    public function isAdPathOnly()
+    {
+        return (count($this->attributes) == 1 && $this->hasAttribute('adspath'));
     }
 
     /**

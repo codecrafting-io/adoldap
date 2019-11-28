@@ -2,7 +2,13 @@
 
 namespace CodeCrafting\AdoLDAP\Parsers;
 
+use CodeCrafting\AdoLDAP\Models\User;
+use CodeCrafting\AdoLDAP\Models\Entry;
+use CodeCrafting\AdoLDAP\Models\Group;
+use CodeCrafting\AdoLDAP\Models\Model;
+use CodeCrafting\AdoLDAP\Models\Computer;
 use CodeCrafting\AdoLDAP\Parsers\Types\TypeParser;
+use CodeCrafting\AdoLDAP\Models\Attributes\ObjectClass;
 
 /**
  * Class Parser.
@@ -29,17 +35,39 @@ class Parser implements ParserInterface
     }
 
     /**
+     * Parse a resultset entry
+     *
+     * @param \VARIANT|array $entry
+     * @return Entry
+     */
+    public function parseEntry($entry)
+    {
+        $attributes = [];
+        if (is_array($entry)) {
+            foreach ($entry as $name => $field) {
+                $attributes[strtolower($name)] = $this->parseField($field);
+            }
+        } else {
+            foreach ($entry as $field) {
+                $attributes[strtolower($field->name)] = $this->parseField($field);
+            }
+        }
+
+        return $this->newEntry($attributes);
+    }
+
+    /**
      * @inheritDoc
      */
-    public function parse($field)
+    public function parseField($field)
     {
         if ($field !== null) {
             $fieldSchema = $this->getFieldSchema($field);
-            if ($fieldSchema['type'] == \VT_VARIANT) {
+            if (in_array($fieldSchema['type'], [\VT_VARIANT, 8204])) {
                 if ($fieldSchema['value'] && count($fieldSchema['value']) > 0) {
                     $aux = [];
                     foreach ($fieldSchema['value'] as $value2) {
-                        $aux[] = $this->parse($value2);
+                        $aux[] = $this->parseField($value2);
                     }
 
                     return $aux;
@@ -58,6 +86,38 @@ class Parser implements ParserInterface
     }
 
     /**
+     * Create a new Entry or Model instance
+     *
+     * @param array $attributes
+     * @return Entry
+     */
+    private function newEntry(array $attributes = [])
+    {
+        $model = Entry::class;
+        if (array_key_exists('objectclass', $attributes)) {
+            $modelMap = $this->getObjectClassModelMap();
+            $objectClass = (new ObjectClass($attributes['objectclass']))->getMostRelevant();
+            $model = $modelMap[$objectClass] ?? Model::class;
+        }
+
+        return new $model($attributes);
+    }
+
+    /**
+     * Get the objectClass LDAP Model Map
+     *
+     * @return void
+     */
+    private function getObjectClassModelMap()
+    {
+        return [
+            User::objectClass()->getMostRelevant()       => User::class,
+            Group::objectClass()->getMostRelevant()      => Group::class,
+            Computer::objectClass()->getMostRelevant()     => Computer::class
+        ];
+    }
+
+    /**
      * Get field valye/type schema
      *
      * @param mixed $field
@@ -73,7 +133,7 @@ class Parser implements ParserInterface
                 $value = $field->value;
                 if ($type == \VT_VARIANT && is_a($value, \VARIANT::class)) {
                     $type = variant_get_type($value);
-                    if (! $this->getTypeParser(TypeParser::FILETIME)->isType($type)) {
+                    if (! $this->getTypeParser(TypeParser::OBJECT)->isType($type)) {
                         $type = $field->type;
                     }
                 }
@@ -100,7 +160,7 @@ class Parser implements ParserInterface
      * Get the parser by a Parser constant ID
      *
      * @param integer $typeParserId
-     * @return void
+     * @return TypeParser
      */
     private function getTypeParser(int $typeParserId)
     {

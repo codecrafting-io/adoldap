@@ -14,9 +14,12 @@ class ObjectClass
      */
     protected $classes;
 
+    protected $mostRelevant;
+
     public function __construct(array $classes)
     {
         $this->classes = ($classes !== null) ? array_map('strtolower', $classes) : [];
+        $this->mostRelevant = end($this->classes);
     }
 
     /**
@@ -27,7 +30,7 @@ class ObjectClass
      */
     public function is(string $className)
     {
-       return (array_search(strtolower($className), $this->classes) !== false);
+        return (array_search(strtolower($className), $this->classes) !== false);
     }
 
     /**
@@ -47,6 +50,6 @@ class ObjectClass
      */
     public function getMostRelevant()
     {
-        return end($this->classes);
+        return $this->mostRelevant;
     }
 }
