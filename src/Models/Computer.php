@@ -12,20 +12,22 @@ use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
 class Computer extends Model
 {
     /**
-     * Column attributes with the original LDAP name
+     * Column map attributes with the original LDAP name
      *
      * @var array
      */
-    const DEFAULT_ATTRIBUTES = [
-        'objectclass',
-        'distinguishedName',
-        'name',
-        'operatingSystem',
-        'operatingSystemVersion',
-        'memberOf',
-        'whenCreated',
-        'objectGUID',
-        'objectSID'
+    const COLUMN_MAP = [
+        'objectclass'   => 'objectclass',
+        'dn'            => 'distinguishedname',
+        'name'          => 'name',
+        'os' => [
+            'operatingSystem',
+            'operatingSystemVersion'
+        ],
+        'memberOf'      => 'memberOf',
+        'createdat'     => 'whencreated',
+        'objectguid'    => 'objectguid',
+        'objectsid'     => 'objectsid'
     ];
 
     /**
@@ -69,6 +71,22 @@ class Computer extends Model
         }
 
         return self::$objClass;
+    }
+
+    /**
+     * Get computer default attributes
+     *
+     * @return array
+     */
+    public static function getDefaultAttributes()
+    {
+        $return = [];
+        $defaultAttributes = array_values(self::COLUMN_MAP);
+        array_walk_recursive($defaultAttributes, function ($a) use (&$return) {
+            $return[] = $a;
+        });
+
+        return $return;
     }
 
     /**

@@ -3,12 +3,12 @@
 namespace CodeCrafting\AdoLDAP\Query;
 
 use CodeCrafting\AdoLDAP\Models\User;
+use CodeCrafting\AdoLDAP\Models\Group;
+use CodeCrafting\AdoLDAP\Models\Computer;
 use CodeCrafting\AdoLDAP\Parsers\ParserInterface;
 use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 use CodeCrafting\AdoLDAP\Connections\LDAPConnection;
 use CodeCrafting\AdoLDAP\Configuration\AdoLDAPConfiguration;
-use CodeCrafting\AdoLDAP\Models\Computer;
-use CodeCrafting\AdoLDAP\Models\Group;
 
 /**
  * Class SearchFactory
@@ -93,16 +93,22 @@ class SearchFactory
     }
 
     /**
-     * Returns user by account name
+     * Returns a user by account name. Use $translate for translate values with the User COLUMN_MAP
      *
      * @param string $accountName
-     * @param array $attributes
-     * @return ResultSetIterator
+     * @param array|string $attributes
+     * @param bool $translate
+     * @return User
      */
-    public function user($accountName, $attributes = [])
+    public function user($accountName, $attributes = [], $translate = true)
     {
-        $attributes = ($attributes) ? $attributes : User::DEFAULT_ATTRIBUTES;
-        return $this->users()->findBy('sAMAccountName', $accountName, $attributes);
+        if ($attributes) {
+            $attributes = ($translate) ? self::translateAttributes(User::COLUMN_MAP, $attributes) : $attributes;
+        } else {
+            $attributes = User::getDefaultAttributes();
+        }
+
+        return $this->users()->firstBy('sAMAccountName', $accountName, $attributes);
     }
 
     /**
@@ -116,16 +122,22 @@ class SearchFactory
     }
 
     /**
-     * Returns a computer by name
+     * Returns a computer by name. Use $translate for translate values with the Computer COLUMN_MAP
      *
-     * @param string $accountName
-     * @param array $attributes
-     * @return ResultSetIterator
+     * @param string $name
+     * @param array|string $attributes
+     * @param bool $translate
+     * @return Computer
      */
-    public function computer($name, $attributes = [])
+    public function computer($name, $attributes = [], $translate = true)
     {
-        $attributes = ($attributes) ? $attributes : Computer::DEFAULT_ATTRIBUTES;
-        return $this->computers()->findBy('cn', $name, $attributes);
+        if ($attributes) {
+            $attributes = ($translate) ? self::translateAttributes(Computer::COLUMN_MAP, $attributes) : $attributes;
+        } else {
+            $attributes = Computer::getDefaultAttributes();
+        }
+
+        return $this->computers()->firstBy('cn', $name, $attributes);
     }
 
     /**
@@ -149,16 +161,22 @@ class SearchFactory
     }
 
     /**
-     * Returns a group by name
+     * Returns a group by name. Use $translate for translate values with the Group COLUMN_MAP
      *
-     * @param string $accountName
-     * @param array $attributes
-     * @return ResultSetIterator
+     * @param string $name
+     * @param array|string $attributes
+     * @param bool $translate
+     * @return Group
      */
-    public function group($name, $attributes = [])
+    public function group($name, $attributes = [], $translate = true)
     {
-        $attributes = ($attributes) ? $attributes : Group::DEFAULT_ATTRIBUTES;
-        return $this->groups()->findBy('cn', $name, $attributes);
+        if ($attributes) {
+            $attributes = ($translate) ? self::translateAttributes(Group::COLUMN_MAP, $attributes) : $attributes;
+        } else {
+            $attributes = Group::getDefaultAttributes();
+        }
+
+        return $this->groups()->firstBy('cn', $name, $attributes);
     }
 
     /**
@@ -170,6 +188,45 @@ class SearchFactory
     public function category($category)
     {
         return $this->newQuery()->whereEquals('objectCategory', $category);
+    }
+
+    /**
+     * Handle dynamic method calls on a new QueryBuilder instance
+     *
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @return mixed
+     */
+    public function __call($method, $parameters)
+    {
+        return call_user_func_array([$this->newQuery(), $method], $parameters);
+    }
+
+    /**
+     * Get the translated values from a model column map
+     *
+     * @param array $columnMap
+     * @param array|string $attributes
+     * @return array
+     */
+    public static function translateAttributes(array $columnMap, $attributes)
+    {
+        $translation = [];
+        $attributes = (is_string($attributes)) ? explode(',', $attributes) : $attributes;
+        foreach ($attributes as $attribute) {
+            $attribute = strtolower($attribute);
+            if (array_key_exists($attribute, $columnMap)) {
+                $newAttribute = $columnMap[$attribute];
+                if (is_array($newAttribute)) {
+                    $translation = array_merge($translation, array_values($newAttribute));
+                } else {
+                    $translation[] = $newAttribute;
+                }
+            }
+        }
+
+        return $translation;
     }
 
     /**
@@ -195,18 +252,5 @@ class SearchFactory
     protected function newBuilder()
     {
         return new QueryBuilder($this->connection, $this->newDialect(), $this->parser);
-    }
-
-    /**
-     * Handle dynamic method calls on a new QueryBuilder instance
-     *
-     * @param string $method
-     * @param array  $parameters
-     *
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return call_user_func_array([$this->newQuery(), $method], $parameters);
     }
 }

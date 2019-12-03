@@ -15,14 +15,14 @@ class Group extends Model
      *
      * @var array
      */
-    const DEFAULT_ATTRIBUTES = [
-        'objectclass',
-        'distinguishedName',
-        'displayName',
-        'member',
-        'whenCreated',
-        'objectGUID',
-        'objectSID'
+    const COLUMN_MAP = [
+        'objectclass'   => 'objectclass',
+        'dn'            => 'distinguishedName',
+        'name'          => 'displayName',
+        'members'       => 'member',
+        'whencreated'   => 'whencreated',
+        'objectguid'    => 'objectguid',
+        'objectsid'     => 'objectsid'
     ];
 
     /**
@@ -55,6 +55,22 @@ class Group extends Model
         }
 
         return self::$objClass;
+    }
+
+    /**
+     * Get group default attributes
+     *
+     * @return array
+     */
+    public static function getDefaultAttributes()
+    {
+        $return = [];
+        $defaultAttributes = array_values(self::COLUMN_MAP);
+        array_walk_recursive($defaultAttributes, function ($a) use (&$return) {
+            $return[] = $a;
+        });
+
+        return $return;
     }
 
     /**

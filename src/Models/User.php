@@ -13,40 +13,43 @@ use CodeCrafting\AdoLDAP\Models\Attributes\DistinguishedName;
 class User extends Model
 {
     /**
-     * Column attributes with the originam LDAP name
+     * Column map attributes with the original LDAP name
      *
      * @var array
      */
-    const DEFAULT_ATTRIBUTES = [
-        'objectclass',
-        'distinguishedName',
-        'sAMAccountName',
-        'givenName',
-        'name',
-        'userWorkstations',
-        'mail',
-        'description',
-        'title',
-        'street',
-        'postalCode',
-        'st',
-        'l',
-        'co',
-        'msExchDelegateListBL',
-        'mobile',
-        'telephoneNumber',
-        'department',
-        'extensionAttribute1',
-        'memberOf',
-        'company',
-        'thumbnailPhoto',
-        'pwdLastSet',
-        'badPwdCount',
-        'badPasswordTime',
-        'lastLogonTimestamp',
-        'lockoutTime',
-        'objectguid',
-        'objectsid'
+    const COLUMN_MAP = [
+        'objectclass'           => 'objectclass',
+        'dn'                    => 'distinguishedname',
+        'accountname'           => 'samaccountname',
+        'firtname'              => 'givenname',
+        'name'                  => 'name',
+        'workstations'          => 'userworkstations',
+        'mail'                  => 'mail',
+        'jobtitle'              => 'description',
+        'jobrole'               => 'title',
+        'address'   => [
+            'street',
+            'postalcode',
+            'st',
+            'l',
+            'co'
+        ],
+        'mailboxes'             => 'msexchdelegatelistbl',
+        'mobile'                => 'mobile',
+        'phone'                 => 'telephoneNumber',
+        'department'            => 'department',
+        'departmentcode'        => 'extensionAttribute1',
+        'memberOf'              => 'memberOf',
+        'company'               => 'company',
+        'photo'                 => 'thumbnailphoto',
+        'passwordlastset'       => 'pwdlastset',
+        'passworderrorcount'    => 'badpwdcount',
+        'passworderrortime'     => 'badpasswordtime',
+        'lastlogin'             => 'lastlogontimestamp',
+        'lockouttime'           => 'lockouttime',
+        'createdat'             => 'whencreated',
+        'objectguid'            => 'objectguid',
+        'objectsid'             => 'objectsid'
     ];
 
     /**
@@ -95,6 +98,22 @@ class User extends Model
         }
 
         return self::$objClass;
+    }
+
+    /**
+     * Get user default attributes
+     *
+     * @return array
+     */
+    public static function getDefaultAttributes()
+    {
+        $return = [];
+        $defaultAttributes = array_values(self::COLUMN_MAP);
+        array_walk_recursive($defaultAttributes, function ($a) use (&$return) {
+            $return[] = $a;
+        });
+
+        return $return;
     }
 
     /**
@@ -253,13 +272,8 @@ class User extends Model
      */
     public function getAddress()
     {
-        if (! $this->address) {
-            $this->address = new Address();
-            $this->address->setCountry($this->getAttribute('co'));
-            $this->address->setState($this->getAttribute('st'));
-            $this->address->setCity($this->getAttribute('l'));
-            $this->address->setStreetAddress($this->getAttribute('street'));
-            $this->address->setPostalCode($this->getAttribute('postalCode'));
+        if (! $this->address && $this->hasAttribute('street')) {
+            $this->setAddress(new Address());
         }
 
         return $this->address;
@@ -573,11 +587,11 @@ class User extends Model
     }
 
     /**
-     * Gets the user's last logon. This attribute may not be accurate depending of the host connected
+     * Gets the user's last login time, aka lastLogonTimestamp. This attribute may not be accurate depending of the host connected
      *
      * @return \DateTime
      */
-    public function getLastLogon()
+    public function getLastLogin()
     {
         return $this->getAttribute('lastLogonTimestamp');
     }

@@ -299,7 +299,7 @@ class QueryBuilder
     public function firstBy($attribute, $value, $attributes = [])
     {
         try {
-            return $this->findByOrFail($attribute, $value, $attributes);
+            return $this->firstByOrFail($attribute, $value, $attributes);
         } catch (EntryNotFoundException $e) {
             return null;
         }
