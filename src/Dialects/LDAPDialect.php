@@ -49,6 +49,7 @@ class LDAPDialect extends DialectInterface
      */
     public function escapeIdentifier($identifier)
     {
+        return $identifier;
     }
 
     /**

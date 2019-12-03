@@ -8,6 +8,7 @@ use CodeCrafting\AdoLDAP\Dialects\DialectInterface;
 use CodeCrafting\AdoLDAP\Connections\LDAPConnection;
 use CodeCrafting\AdoLDAP\Configuration\AdoLDAPConfiguration;
 use CodeCrafting\AdoLDAP\Models\Computer;
+use CodeCrafting\AdoLDAP\Models\Group;
 
 /**
  * Class SearchFactory
@@ -92,6 +93,19 @@ class SearchFactory
     }
 
     /**
+     * Returns user by account name
+     *
+     * @param string $accountName
+     * @param array $attributes
+     * @return ResultSetIterator
+     */
+    public function user($accountName, $attributes = [])
+    {
+        $attributes = ($attributes) ? $attributes : User::DEFAULT_ATTRIBUTES;
+        return $this->users()->findBy('sAMAccountName', $accountName, $attributes);
+    }
+
+    /**
      * Returns a query builder scoped to search users
      *
      * @return QueryBuilder
@@ -111,7 +125,7 @@ class SearchFactory
     public function computer($name, $attributes = [])
     {
         $attributes = ($attributes) ? $attributes : Computer::DEFAULT_ATTRIBUTES;
-        return $this->computers()->findBy('CN', $name, $attributes);
+        return $this->computers()->findBy('cn', $name, $attributes);
     }
 
     /**
@@ -125,6 +139,29 @@ class SearchFactory
     }
 
     /**
+     * Returns a query builder scoped to search groups
+     *
+     * @return QueryBuilder
+     */
+    public function groups()
+    {
+        return $this->category(Group::objectClass()->getMostRelevant());
+    }
+
+    /**
+     * Returns a group by name
+     *
+     * @param string $accountName
+     * @param array $attributes
+     * @return ResultSetIterator
+     */
+    public function group($name, $attributes = [])
+    {
+        $attributes = ($attributes) ? $attributes : Group::DEFAULT_ATTRIBUTES;
+        return $this->groups()->findBy('cn', $name, $attributes);
+    }
+
+    /**
      * Returns a query builder scoped to search by category/objectclass
      *
      * @param string $category
@@ -133,19 +170,6 @@ class SearchFactory
     public function category($category)
     {
         return $this->newQuery()->whereEquals('objectCategory', $category);
-    }
-
-    /**
-     * Returns a user by account name
-     *
-     * @param string $accountName
-     * @param array $attributes
-     * @return User
-     */
-    public function user($accountName, $attributes = [])
-    {
-        $attributes = ($attributes) ? $attributes : User::DEFAULT_ATTRIBUTES;
-        return $this->users()->findBy('sAMAccountName', $accountName, $attributes);
     }
 
     /**

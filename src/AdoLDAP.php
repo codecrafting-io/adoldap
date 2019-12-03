@@ -4,7 +4,6 @@ namespace CodeCrafting\AdoLDAP;
 
 use InvalidArgumentException;
 use CodeCrafting\AdoLDAP\AdoLDAPException;
-use CodeCrafting\AdoLDAP\Dialects\SQLDialect;
 use CodeCrafting\AdoLDAP\Query\SearchFactory;
 use CodeCrafting\AdoLDAP\Parsers\ParserInterface;
 use CodeCrafting\AdoLDAP\Connections\AdodbException;
@@ -251,7 +250,7 @@ class AdoLDAP implements ProviderInterface
      */
     public static function isCompatible()
     {
-        if (PHP_INT_SIZE == 8 && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && class_exists(\COM::class, false)) {
+        if (PHP_INT_SIZE == 8 && strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' && class_exists('COM', false)) {
             return true;
         }
 

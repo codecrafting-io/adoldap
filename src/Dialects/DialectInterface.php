@@ -238,10 +238,23 @@ abstract class DialectInterface
      */
     protected function getCommand(QueryBuilder $builder)
     {
+        $filters = $this->compileFilters($builder->getFilters());
+        foreach ($builder->getBindings() as $key => $binding) {
+            if (is_string($key)) {
+                $filters = str_ireplace(':' . $key . ':', $this->escapeValue($binding), $filters);
+                $filters = str_ireplace(':' . $key, $this->escapeValue($binding), $filters);
+            } else {
+                $questionMarkPos = strpos($filters, '?');
+                if ($questionMarkPos !== false) {
+                    $filters = substr_replace($filters, $this->escapeValue($binding), $questionMarkPos, 1);
+                }
+            }
+        }
+
         return [
             'SELECT'    => $this->compileSelect($builder->getSelects()),
             'FROM'      => $this->compileFrom(),
-            'FILTERS'   => $this->compileFilters($builder->getFilters())
+            'FILTERS'   => $filters
         ];
     }
 

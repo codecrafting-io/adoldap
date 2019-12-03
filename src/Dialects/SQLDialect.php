@@ -48,6 +48,7 @@ class SQLDialect extends DialectInterface
      */
     public function escapeIdentifier($identifier)
     {
+        return $identifier;
     }
 
     /**
@@ -59,10 +60,10 @@ class SQLDialect extends DialectInterface
         $pParenthesis = false;
         foreach ($filters as $key => $filter) {
             if ($key > 0) {
-                if($filter['expression'] == '(') {
+                if ($filter['expression'] == '(') {
                     $pParenthesis = true;
                     $booleanOperator = ' ' . $filter['type'] . ' ';
-                } elseif($pParenthesis) {
+                } elseif ($pParenthesis) {
                     $pParenthesis = false;
                     $booleanOperator = '';
                 } else {

@@ -63,7 +63,7 @@ class QueryBuilder
      *
      * @var array
      */
-    protected $bindParams = [];
+    protected $bindings = [];
 
     /**
      * QUery filters
@@ -113,26 +113,13 @@ class QueryBuilder
     }
 
     /**
-     * Get query binding parameter delimiter
+     * Get binding parameters.
      *
-     * @return  string
+     * @return array
      */
-    public function getBindingDelimeter()
+    public function getBindings()
     {
-        return $this->bindingDelimeter;
-    }
-
-    /**
-     * Set query binding parameter delimiter
-     *
-     * @param  string  $bindingDelimeter  Query binding parameter delimiter
-     * @return  self
-     */
-    public function setBindingDelimeter(string $bindingDelimeter)
-    {
-        $this->bindingDelimeter = $bindingDelimeter;
-
-        return $this;
+        return $this->bindings;
     }
 
     /**
@@ -211,7 +198,10 @@ class QueryBuilder
             $selects[] = 'objectclass';
         }
 
-        return array_unique($selects);
+        //Return unique and escaped attributes for selection
+        return array_map(function ($attribute) {
+            return $this->dialect->escapeIdentifier($attribute);
+        }, array_unique($selects));
     }
 
     /**
@@ -358,15 +348,15 @@ class QueryBuilder
      *
      * @param string $expression The expression to be filter
      * @param string $type The filter type, must be 'AND' or 'OR'
-     * @param array $bindParams The optional binding parameter values
+     * @param array $bindings The optional binding parameter values
      * @return self
      */
-    public function where(string $expression, string $type = self::AND_FILTER, array $bindParams = [])
+    public function where(string $expression, string $type = self::AND_FILTER, array $bindings = [])
     {
         if (! in_array($type, [self::AND_FILTER, self::OR_FILTER])) {
             throw new InvalidArgumentException("Invalid filter type: {$type}.");
         }
-        $this->bindParams = array_merge($this->bindParams, $bindParams);
+        $this->bindings = array_merge($this->bindings, $bindings);
         $this->filters[] = ['type' => $type, 'expression' => $expression];
 
         return $this;
@@ -376,24 +366,24 @@ class QueryBuilder
      * Adds a AND WHERE clause. The 'AND' operator will be ignored if this is the first filter
      *
      * @param string $expression The expression to be filter
-     * @param array $bindParams The optional binding parameter values
+     * @param array $bindings The optional binding parameter values
      * @return self
      */
-    public function andWhere(string $expression, array $bindParams = [])
+    public function andWhere(string $expression, array $bindings = [])
     {
-        return $this->where($expression, self::AND_FILTER, $bindParams);
+        return $this->where($expression, self::AND_FILTER, $bindings);
     }
 
     /**
      * Adds a OR WHERE clause. The 'OR' operator will be ignored if this is the first filter
      *
      * @param string $expression The expression to be filter
-     * @param array $bindParams The optional binding parameter values
+     * @param array $bindings The optional binding parameter values
      * @return self
      */
-    public function orWhere(string $expression, array $bindParams = [])
+    public function orWhere(string $expression, array $bindings = [])
     {
-        return $this->where($expression, self::OR_FILTER, $bindParams);
+        return $this->where($expression, self::OR_FILTER, $bindings);
     }
 
     /**
@@ -404,7 +394,7 @@ class QueryBuilder
     public function openWhereGroup(string $type = self::AND_FILTER)
     {
         //For now the builder does not support nested expressions
-        if($this->isSQLDialect()) {
+        if ($this->isSQLDialect()) {
             $this->where('(', $type);
         }
 
@@ -419,7 +409,7 @@ class QueryBuilder
     public function closeWhereGroup()
     {
         //For now the builder does not support nested expressions
-        if($this->isSQLDialect()) {
+        if ($this->isSQLDialect()) {
             $this->filters[] = ['type' => null, 'expression' => ')'];
         }
 
@@ -463,19 +453,11 @@ class QueryBuilder
     public function whereIn(string $expression, array $values, string $type = self::AND_FILTER)
     {
         $this->openWhereGroup($type);
-        if ($this->isSQLDialect()) {
-            $values = array_map(function ($value) {
-                return $this->dialect->escapeValue($value);
-            }, $values);
-
-            return $this->where($expression . ' IN(' . implode(',', $values) . ')')->closeWhereGroup();
-        } else {
-            foreach ($values as $value) {
-                $this->whereEquals($expression, $this->dialect->escapeValue($value), self::OR_FILTER);
-            }
-
-            return $this->closeWhereGroup();
+        foreach ($values as $value) {
+            $this->whereEquals($expression, $value, self::OR_FILTER);
         }
+
+        return $this->closeWhereGroup();
     }
 
     /**
