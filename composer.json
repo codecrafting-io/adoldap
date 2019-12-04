@@ -12,7 +12,6 @@
     "type": "project",
     "require": {
         "php-64bit": ">=7.1",
-        "ext-phalcon": "^3.0",
         "ext-com_dotnet": "*"
     },
     "require-dev": {

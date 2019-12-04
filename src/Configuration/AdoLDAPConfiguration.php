@@ -25,12 +25,12 @@ class AdoLDAPConfiguration
         // The port to use for connecting to your host.
         'port' => DialectInterface::PORT,
 
-        // The dialect to use for the ADO LDAP search and bind.
+        // The dialect class to use for the ADO LDAP search and bind.
         'dialect' => LDAPDialect::class,
 
         /**
          * The base distinguished name of your domain.
-         * Use ROOT_DN to disconver the defaultNamingContext.
+         * Use ROOT_DN to discover the defaultNamingContext.
          */
         'baseDn' => DialectInterface::ROOT_DN,
 
@@ -55,7 +55,7 @@ class AdoLDAPConfiguration
         //Whether or not to check connection execution on bind
         'checkConnection' => false,
 
-        //Type of parser
+        //The data parser of a result set
         'parser' => Parser::class
     ];
 
