@@ -1,5 +1,9 @@
 # AdoLDAP
 
+[![Latest Stable Version](https://poser.pugx.org/codecrafting-net/adoldap/v/stable)](https://packagist.org/packages/codecrafting-net/adoldap)
+[![License](https://poser.pugx.org/codecrafting-net/adoldap/license.svg)](https://packagist.org/packages/codecrafting-net/adoldap)
+[![Downloads](https://poser.pugx.org/codecrafting-net/adoldap/license)](https://packagist.org/packages/codecrafting-net/adoldap)
+
 ## Summary
 
 - [How it works](#how-it-works)
