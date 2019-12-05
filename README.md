@@ -13,6 +13,10 @@
 - [Handling Data](#handling-data)
   - [Models & Column Map Attributes](#models--column-map-attributes)
   - [Special Attributes](#special-attributes)
+  - [Paging Data](#paging-data)
+  - [After Fetch Callback](#after-fetch-callback)
+
+ > :warning: **WARNING:** :warning: This library still on alfa, so newer version may break backwards compability.
 
 The AdoLDAP is a small PHP library to seamless search and authenticate on the Active Directory with ADO and LDAP. In short terms it provides the following benefits (:star::star::star::star::star:):
 
@@ -28,7 +32,7 @@ The AdoLDAP is a small PHP library to seamless search and authenticate on the Ac
 
 The **main feature** that AdoLDAP provides is a **seamless way to authenticate on AD** with LDAP using the current security context of the thread in execution. This is a feature that is implemented by the [**ADODB Active Directory Interface**](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which can be used through **COM objects** whithin PHP language (or any COM aware language). Usually this means if the current user are logged on a domain, and this user have permission to search on AD (which likely will), the ADODB don't require especific cridentials to connect.
 
-In another words, now you can create web applications that to search through LDAP without the need of a especific read/write user to connect. For example, you can have use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take benefits from seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
+In another words, now you can create web applications that to search through LDAP without the need of a especific read/write user to connect. For example, you can have use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take the benefit of a seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
 
 ## Requirements
 
@@ -177,6 +181,19 @@ $ad->search()->user('jdoe', ['name']);
 $ad->search()->whereEquals('objectCategory', 'user')->firstBy('sAMAccountName', 'jdoe', ['name']);
 ```
 
+Summarizing, the `QueryBuilder` is compound by methods to construct the selection of attributes and conditional clausules, to search from a sepecific source, using either the `LDAPDialect` or `SQLDialect`. You build a `SELECT` with the `select` method, define the clausules with the `where` methods, having the possibility to use either the `LDAPDialect` or `SQLDialect`. You can also change and set a specific `BASE_DN` with the `from` method.
+
+```php
+$ad->search()
+    ->select(['name'])
+    ->from('DC=MYDOMAIN,DC=COM')
+    ->whereEquals('objectCategory', 'user')
+    ->orWhere('objectCategory', 'computer')
+    ->get();
+```
+
+**NOTE:** Is not necessary to define a base dn using from, because the value provided in configuration is used by default.
+
 ### Search Dialects
 
 [SUBIR](#searching)
@@ -223,7 +240,7 @@ Each position of a result set is retrievied by the `current` method of a `Result
 
 [SUBIR](#handling-data)
 
-However, most of the searchs actually returns one of the `Models`, could beign a `User`, `Computer` or `Group`. The `Models` extends a `Entry` by provinding a human readeable get/set methods for the "default attributes", that enhances and facilitates the handling of certain values. If you find particular hard to understant the meaning or just don't known the available main attribute for objects on LDAP, the `Model` provides a `COLUMN_MAP` that maps the most important attributes of the corresponding AD object, to more "human readeable" names. For example take a look to the `COLUMN_MAP` of a `User`:
+Most of the searchs actually returns one of the `Models`, could beign a `User`, `Computer` or `Group`. The `Model` extends a `Entry` by provinding a human readeable get/set methods for the "default attributes", that enhances and facilitates the handling of certain values. If you find particular hard to understand the meaning or just don't known the available main attributes for objects on LDAP, the `Model` provides a `COLUMN_MAP` that maps the most important attributes of the corresponding AD object, to more "human readeable" names. For example take a look to the `COLUMN_MAP` of a `User`:
 
 ```php
 const COLUMN_MAP = [
@@ -292,7 +309,7 @@ foreach($users as $user) {
 }
 ```
 
-The `getHtmlPhoto` returns a `IMG` HTML tag, already containing the class profile-picture, using the `src` as base64 string representation of the image. You can also use the mapped attributes in a `QueryBuilder` selection.
+The `getHtmlPhoto` returns a `IMG` HTML tag, already containing the class `profile-picture`, using the `src` as base64 string representation of the image. You can also use the mapped attributes in a `QueryBuilder` selection.
 
 ```php
 $attributes = SearchFactory::translateAttributes(User::COLUMN_MAP, ['accountName', 'name', 'photo', 'mailboxes']);
@@ -323,13 +340,13 @@ $ad->search()->user('jdoe');
 $ad->search()->user('jdoe', User::getDefaultAttributes(), false);
 ```
 
- :warning:**IMPORTANT:**  :warning: Is possible to select all attributes, by provinding the value `['*']`, but this is **EXTREMELY DISCOURAGED**, not only by the fact that may be a lot of attributes that you possibily won't use, but specially to performance reasons. When you use a query, using the wildcard `*` the ADODB returns the ADSPATH, which is the full distinguished name of the object, forcing the library to resolve them by binding directly to the object using `COM`, which is EXTREMELY slow even for a single object. Normally searching for a entry takes arround 150-350ms, but binding to the object can take 4s. So only use for test purposes.
+> :warning: **IMPORTANT:** :warning: Is possible to select all attributes, by provinding the value `['*']`, but this is **EXTREMELY DISCOURAGED**, not only by the fact that may be a lot of attributes that you possibily won't use, but specially to performance reasons. When you use a query, using the wildcard `*` the ADODB returns the ADSPATH, which is the full distinguished name of the object, forcing the library to resolve them by binding directly to the object using `COM`, which is EXTREMELY slow even for a single object. Normally searching for a entry takes arround 150-350ms, but binding to the object can take 4s. So only use for test purposes.
 
 ### Special Attributes
 
 [SUBIR](#handling-data)
 
-In addition to the `Models`, some attributes are handling as objects, like the `DistinguishedName`, `OS`, `Address` and `ObjectClass`.
+In addition to the `Model`, some attributes are handling as objects, like the `DistinguishedName`, `OS`, `Address` and `ObjectClass`.
 
 #### DistinguidedName
 
@@ -371,3 +388,37 @@ $computer->compareTo($ad->search()->computer('MACHEINE02')) //outputs -1, 0, 1;
 ```
 
 ### Paging Data
+
+[SUBIR](#handling-data)
+
+The ADODB natively page the results by using the [`RecordSet`](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which are managed by the `ResultSetIterator`. You can provide a specific LDAP page size by a value for `pageSize` configuration. The default value is 1000. Nevertheless, the `ResultSetIterator` provides a separate paging using the `getEntries` method, which allows you to define a proper limit/offset.
+
+```php
+//Get 10 users offseting 1 page. Returns a array of User objects
+$users = $ad->search()->users()
+            ->select(User::getDefaultAttributes())
+            ->whereMemberOf('CN=AWESOME GROUP,DC=MYDOMAIN,DC=COM')
+            ->get()->getEntries(10, 1);
+```
+
+### After Fetch Callback
+
+[SUBIR](#handling-data)
+
+The `ResultSetIterator` also provides a `afterFetch` callback, which allows you to transform the entries every time the `current` method is called.
+
+```php
+$user = $ad->search()->user('jdoe')->afterFetch(function($user) {
+                return [
+                    'name' => $user->getName(),
+                    'accountName' => $user->getAccountName(),
+                    'photo' => $user->getPhoto()
+                ];
+            })->getEntries();
+```
+
+You can set multiple afterFetch multiple times, which will transform the data by the order that was provided.
+
+## For Last
+
+> Made with :heart: by @lucasmarotta.
