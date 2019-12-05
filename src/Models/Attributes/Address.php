@@ -162,4 +162,20 @@ class Address
 
         return $this;
     }
+
+    /**
+     * Get a array representation
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'country' => $this->country,
+            'state' => $this->state,
+            'city' => $this->city,
+            'streetAddress' => $this->streetAddress,
+            'postalCode' => $this->postalCode
+        ];
+    }
 }

@@ -52,7 +52,7 @@ class AdoLDAP implements ProviderInterface
         if (self::isCompatible()) {
             $this->setConfiguration($configuration)->setConnection();
             if ($this->configuration->get('autoConnect')) {
-                $this->connect($this->configuration->get('username'), $this->configuration->get('password'));
+                $this->connect();
             }
         } else {
             throw new AdoLDAPException('Current environment must be a Windows system with 64 bit PHP with COM extension loaded');

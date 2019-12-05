@@ -186,9 +186,11 @@ class User extends Model
      */
     public function getWorkstations()
     {
-        $workstations = explode(',', $this->getAttribute('userWorkstations'));
+        if(! $this->isEmpty('userWorkstations')) {
+            return explode(',', $this->getAttribute('userWorkstations'));
+        }
 
-        return $workstations ?? [];
+        return [];
     }
 
     /**
@@ -272,8 +274,13 @@ class User extends Model
      */
     public function getAddress()
     {
-        if (! $this->address && $this->hasAttribute('street')) {
-            $this->setAddress(new Address());
+        if (! $this->address && $this->isEmpty('street')) {
+            $this->address = new Address();
+            $this->address->setCountry($this->getAttribute('co'));
+            $this->address->setState($this->getAttribute('st'));
+            $this->address->setCity($this->getAttribute('l'));
+            $this->address->setStreetAddress($this->getAttribute('street'));
+            $this->address->setPostalCode($this->getAttribute('postalCode'));
         }
 
         return $this->address;
@@ -307,13 +314,14 @@ class User extends Model
      */
     public function getMailboxes(bool $nameOnly = true)
     {
-        return array_map(function ($mailbox) use ($nameOnly) {
+        $mailboxes = $this->getAttribute('msExchDelegateListBL') ?? [];
+        return array_map(function($mailbox) use ($nameOnly) {
             if ($nameOnly) {
                 return (new DistinguishedName($mailbox))->getName();
             }
 
             return new DistinguishedName($mailbox);
-        }, $this->getAttribute('msExchDelegateListBL'));
+        }, $mailboxes);
     }
 
     /**

@@ -225,6 +225,9 @@ class SearchFactory
                 }
             }
         }
+        if (count($translation) == 1) {
+            return reset($translation);
+        }
 
         return $translation;
     }
