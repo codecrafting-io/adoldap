@@ -211,10 +211,7 @@ class QueryBuilder
      */
     public function getQuery()
     {
-        $query = $this->dialect->compileCommand($this);
-        dump($query);
-
-        return $query;
+        return $this->dialect->compileCommand($this);
     }
 
     /**
