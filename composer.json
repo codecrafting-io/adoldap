@@ -1,15 +1,21 @@
 {
     "name": "codecrafting-net/adoldap",
+    "type": "library",
     "description": "A PHP seamless way to search on the Active Directory with ADO and LDAP",
     "keywords": ["ldap", "ado", "adsi", "adodb", "ldap-sso"],
     "license": "MIT",
+    "support": {
+        "docs": "https://github.com/codecrafting-net/adoldap/blob/master/README.md",
+        "issues": "https://github.com/codecrafting-net/adoldap/issues",
+        "source": "https://github.com/codecrafting-net/adoldap",
+        "email": "contact@codecrafting.net"
+    },
     "authors": [
         {
             "name": "Lucas Marotta",
             "email": "lucas.marotta@codecrafting.net"
         }
     ],
-    "type": "project",
     "require": {
         "php-64bit": ">=7.1",
         "ext-com_dotnet": "*"
@@ -23,10 +29,5 @@
         "psr-4": {
             "CodeCrafting\\AdoLDAP\\": "src/"
         }
-    },
-    "config": {
-        "cache-files-ttl": 0,
-        "cache-ttl": 0,
-        "cache-files-maxsize": "50GiB"
     }
 }
