@@ -15,8 +15,9 @@
   - [Special Attributes](#special-attributes)
   - [Paging Data](#paging-data)
   - [After Fetch Callback](#after-fetch-callback)
+- [Comming Soon](#comming-soon)
 
- > :warning: **WARNING:** :warning: This library still on alfa, so newer version may break backwards compability.
+ > :warning: **WARNING:** :warning: This library still on alfa, so testing is on the way and newer version may break backwards compability.
 
 The AdoLDAP is a small PHP library to seamless search and authenticate on the Active Directory with ADO and LDAP. In short terms it provides the following benefits (:star::star::star::star::star:):
 
@@ -419,6 +420,17 @@ $user = $ad->search()->user('jdoe')->afterFetch(function($user) {
 
 You can set multiple afterFetch multiple times, which will transform the data by the order that was provided.
 
+## Comming Soon
+
+[SUBIR](#adoldap)
+
+- Active Record `Model`. For now only search functionality is available.
+- Event support.
+- More robust `QueryBuilder`.
+- Full and complete documentation site.
+
 ## For Last
+
+Thanks for the [Adldap2](https://github.com/Adldap2/Adldap2) for inspiration to create this library.
 
 > Made with :heart: by @lucasmarotta.
