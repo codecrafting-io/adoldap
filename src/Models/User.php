@@ -274,7 +274,7 @@ class User extends Model
      */
     public function getAddress()
     {
-        if (! $this->address && $this->isEmpty('street')) {
+        if (! $this->address && ! $this->isEmpty('street')) {
             $this->address = new Address();
             $this->address->setCountry($this->getAttribute('co'));
             $this->address->setState($this->getAttribute('st'));
