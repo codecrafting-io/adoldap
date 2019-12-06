@@ -46,8 +46,13 @@ In another words, now you can create web applications that to search through LDA
 - Windows environtment.
 - PHP >= 7.1 64bits
 - COM PHP extension enabled
+- [Composer](https://getcomposer.org/)
 
-The AdoLDAP only works on Windows, because COM extensions is the way to use ADODB, since ADO is a Windows only.
+The AdoLDAP only works on Windows, because COM extensions is the way to use ADODB, since ADO is a Windows only. To install AdoLDAP use the following command
+
+```sh
+composer require codecrafting-net/adoldap
+```
 
 ## Configuration
 
@@ -251,7 +256,7 @@ Most of the searchs actually returns one of the `Models`, could beign a `User`, 
 const COLUMN_MAP = [
     'objectclass'           => 'objectclass',
     'dn'                    => 'distinguishedname',
-    'accountname'           => 'samaccountname',
+    'account'               => 'samaccountname',
     'firtname'              => 'givenname',
     'name'                  => 'name',
     'workstations'          => 'userworkstations',
@@ -292,7 +297,7 @@ $users = $ad->search()->users()
             ->whereMemberOf('CN=AWESOME GROUP,DC=MYDOMAIN,DC=COM')->get();
 
 foreach($users as $user) {
-    echo $user->getAccountName();
+    echo $user->getAccount();
 
     //EQUALS
 
@@ -308,7 +313,7 @@ $users = $ad->search()->users()
             ->whereMemberOf('CN=AWESOME GROUP,DC=MYDOMAIN,DC=COM')->get();
 
 foreach($users as $user) {
-    echo $user->getAccountName() . '<br>';
+    echo $user->getAccount() . '<br>';
     echo $user->getName() . '<br>';
     echo $user->getHtmlPhoto(['class' => 'profile-picture']) . '<br>';
 }
@@ -416,7 +421,7 @@ The `ResultSetIterator` also provides a `afterFetch` callback, which allows you 
 $user = $ad->search()->user('jdoe')->afterFetch(function($user) {
                 return [
                     'name' => $user->getName(),
-                    'accountName' => $user->getAccountName(),
+                    'accountName' => $user->getAccount(),
                     'photo' => $user->getPhoto()
                 ];
             })->getEntries();
@@ -432,6 +437,7 @@ You can set multiple afterFetch multiple times, which will transform the data by
 - Event support.
 - More robust `QueryBuilder`.
 - Full and complete documentation site.
+- Cache support.
 
 ## For Last
 

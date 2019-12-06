@@ -20,7 +20,7 @@ class User extends Model
     const COLUMN_MAP = [
         'objectclass'           => 'objectclass',
         'dn'                    => 'distinguishedname',
-        'accountname'           => 'samaccountname',
+        'account'               => 'samaccountname',
         'firtname'              => 'givenname',
         'name'                  => 'name',
         'workstations'          => 'userworkstations',
