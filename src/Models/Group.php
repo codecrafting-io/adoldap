@@ -16,13 +16,13 @@ class Group extends Model
      * @var array
      */
     const COLUMN_MAP = [
-        'objectclass'   => 'objectclass',
+        'objectClass'   => 'objectClass',
         'dn'            => 'distinguishedName',
         'name'          => 'displayName',
         'members'       => 'member',
-        'whencreated'   => 'whencreated',
-        'objectguid'    => 'objectguid',
-        'objectsid'     => 'objectsid'
+        'createdAt'     => 'whenCreated',
+        'objectGuid'    => 'objectGuid',
+        'objectSid'     => 'objectSid'
     ];
 
     /**

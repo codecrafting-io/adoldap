@@ -18,38 +18,38 @@ class User extends Model
      * @var array
      */
     const COLUMN_MAP = [
-        'objectclass'           => 'objectclass',
-        'dn'                    => 'distinguishedname',
-        'account'               => 'samaccountname',
-        'firtname'              => 'givenname',
+        'objectClass'           => 'objectClass',
+        'dn'                    => 'distinguishedName',
+        'account'               => 'sAMAccountName',
+        'firtName'              => 'givenName',
         'name'                  => 'name',
-        'workstations'          => 'userworkstations',
+        'workstations'          => 'userWorkstations',
         'mail'                  => 'mail',
-        'jobtitle'              => 'description',
-        'jobrole'               => 'title',
+        'jobTitle'              => 'description',
+        'jobRole'               => 'title',
         'address'   => [
             'street',
-            'postalcode',
+            'postalCode',
             'st',
             'l',
             'co'
         ],
-        'mailboxes'             => 'msexchdelegatelistbl',
+        'mailboxes'             => 'msExchDelegateListBl',
         'mobile'                => 'mobile',
         'phone'                 => 'telephoneNumber',
         'department'            => 'department',
-        'departmentcode'        => 'extensionAttribute1',
+        'departmentCode'        => 'extensionAttribute1',
         'memberOf'              => 'memberOf',
         'company'               => 'company',
-        'photo'                 => 'thumbnailphoto',
-        'passwordlastset'       => 'pwdlastset',
-        'passworderrorcount'    => 'badpwdcount',
-        'passworderrortime'     => 'badpasswordtime',
-        'lastlogin'             => 'lastlogontimestamp',
-        'lockouttime'           => 'lockouttime',
-        'createdat'             => 'whencreated',
-        'objectguid'            => 'objectguid',
-        'objectsid'             => 'objectsid'
+        'photo'                 => 'thumbnailPhoto',
+        'passwordLastSet'       => 'pwdLastSet',
+        'passwordErrorCount'    => 'badPwdCount',
+        'passwordErrorTime'     => 'badPasswordTime',
+        'lastLogin'             => 'lastLogonTimestamp',
+        'lockoutTime'           => 'lockoutTime',
+        'createdAt'             => 'whenCreated',
+        'objectGuid'            => 'objectGuid',
+        'objectSid'             => 'objectSid'
     ];
 
     /**

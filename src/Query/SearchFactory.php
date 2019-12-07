@@ -214,6 +214,7 @@ class SearchFactory
     {
         $translation = [];
         $attributes = (is_string($attributes)) ? explode(',', $attributes) : $attributes;
+        $columnMap = array_change_key_case($columnMap);
         foreach ($attributes as $attribute) {
             $attribute = strtolower($attribute);
             if (array_key_exists($attribute, $columnMap)) {

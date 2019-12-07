@@ -17,17 +17,17 @@ class Computer extends Model
      * @var array
      */
     const COLUMN_MAP = [
-        'objectclass'   => 'objectclass',
-        'dn'            => 'distinguishedname',
+        'objectClass'   => 'objectClass',
+        'dn'            => 'distinguishedName',
         'name'          => 'name',
         'os' => [
             'operatingSystem',
             'operatingSystemVersion'
         ],
         'memberOf'      => 'memberOf',
-        'createdat'     => 'whencreated',
-        'objectguid'    => 'objectguid',
-        'objectsid'     => 'objectsid'
+        'createdAt'     => 'whencreated',
+        'objectGuid'    => 'objectGuid',
+        'objectSid'     => 'objectSid'
     ];
 
     /**
