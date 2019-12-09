@@ -186,7 +186,7 @@ class User extends Model
      */
     public function getWorkstations()
     {
-        if(! $this->isEmpty('userWorkstations')) {
+        if (! $this->isEmpty('userWorkstations')) {
             return explode(',', $this->getAttribute('userWorkstations'));
         }
 
@@ -315,7 +315,7 @@ class User extends Model
     public function getMailboxes(bool $nameOnly = true)
     {
         $mailboxes = $this->getAttribute('msExchDelegateListBL') ?? [];
-        return array_map(function($mailbox) use ($nameOnly) {
+        return array_map(function ($mailbox) use ($nameOnly) {
             if ($nameOnly) {
                 return (new DistinguishedName($mailbox))->getName();
             }
@@ -444,33 +444,49 @@ class User extends Model
     }
 
     /**
-     * Check whether or not the user's is a member of the provided group
+     * Check whether or not the user's is a member of the provided group or groups.
+     * This method does not resolve nested memberships.
      *
-     * @param DistinguishedName|string $group
+     * @param mixed $group
      * @throws ModelException if group is not a string or a instance of DistinguidedName
      * @return bool
      */
     public function isMemberOf($group)
     {
-        if (is_object($group) && $group instanceof DistinguishedName) {
-            $memberOf = $this->getMemberOf(false);
-            if ($memberOf === null) {
-                return false;
-            }
-            return boolval(array_filter($memberOf, function ($dn) use ($group) {
-                return $group->equals($dn);
-            }));
-        } elseif (is_string($group)) {
-            $memberOf = $this->getMemberOf();
-            if ($memberOf === null) {
-                return false;
-            }
-            $group = trim(strtolower($group));
-
-            return (array_search($group, array_map('strtolower', $memberOf)) !== false);
+        $groups = [];
+        if (! is_array($group)) {
+            $groups[] = $group;
         } else {
-            throw new ModelException('group must be a string or a instance of' . DistinguishedName::class);
+            $groups = $group;
         }
+
+        foreach ($groups as $group) {
+            if (is_object($group) && ($group instanceof DistinguishedName || $group instanceof Group)) {
+                $memberOf = $this->getMemberOf(false);
+                if ($memberOf === null) {
+                    return false;
+                }
+                return boolval(array_filter($memberOf, function ($dn) use ($group) {
+                    if (isset($group->getDn())) {
+                        return $group->getDn()->equals($dn);
+                    }
+
+                    return $group->equals($dn);
+                }));
+            } elseif (is_string($group)) {
+                $memberOf = $this->getMemberOf();
+                if ($memberOf === null) {
+                    return false;
+                }
+                $group = trim(strtolower($group));
+
+                return (array_search($group, array_map('strtolower', $memberOf)) !== false);
+            } else {
+                throw new ModelException('group must be a string or a instance of' . DistinguishedName::class);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -544,6 +560,32 @@ class User extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Save photo to a file. Info fileinfo extension is available the filepath extension
+     * will be replaced by the proper according to the mime type.
+     *
+     * @param string $path
+     * @return bool
+     */
+    public function savePhoto($path)
+    {
+        if ($photo = $this->getRawPhoto()) {
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open();
+                $mime = finfo_buffer($finfo, $photo, FILEINFO_MIME_TYPE);
+                if ($mime != '???') {
+                    $extension = ($mime == 'image/jpeg') ? 'jpg' : explode('/', $mime)[1];
+                    $pathinfo = pathinfo($path);
+                    $path = $pathinfo['dirname'] . '/' . $pathinfo['filename'] . '.' . $extension;
+                }
+            }
+
+            return (file_put_contents($path, $photo) !== false);
+        }
+
+        return false;
     }
 
     /**

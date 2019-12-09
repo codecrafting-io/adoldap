@@ -319,7 +319,9 @@ foreach($users as $user) {
 }
 ```
 
-The `getHtmlPhoto` returns a `IMG` HTML tag, already containing the class `profile-picture`, using the `src` as base64 string representation of the image. You can also use the mapped attributes in a `QueryBuilder` selection.
+The `getHtmlPhoto` returns a `IMG` HTML tag, already containing the class `profile-picture`, using the `src` as base64 string representation of the image. For the photo attribute you can also get just the base64 or the raw binary string or even save the photo to a file, with the respective methods `getPhoto`, `getRawPhoto`, `savePhoto`.
+
+You can also use the mapped attributes in a `QueryBuilder` selection.
 
 ```php
 $attributes = SearchFactory::translateAttributes(User::COLUMN_MAP, ['accountName', 'name', 'photo', 'mailboxes']);

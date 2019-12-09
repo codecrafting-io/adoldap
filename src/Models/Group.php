@@ -116,32 +116,48 @@ class Group extends Model
     }
 
     /**
-     * Check whether or not the user's is a member of the group
+     * Check whether or not the user or users are member of the group.
+     * This method does not resolve nested memberships.
      *
-     * @param DistinguishedName|string $groupMember
+     * @param mixed $user
      * @throws ModelException if group is not a string or a instance of DistinguidedName
      * @return bool
      */
-    public function inMembers($groupMember)
+    public function inMembers($user)
     {
-        if (is_object($groupMember) && $groupMember instanceof DistinguishedName) {
-            $members = $this->getMembers(false);
-            if ($members === null) {
-                return false;
-            }
-            return boolval(array_filter($members, function ($dn) use ($groupMember) {
-                return $groupMember->equals($dn);
-            }));
-        } elseif (is_string($groupMember)) {
-            $members = $this->getMemberOf();
-            if ($members === null) {
-                return false;
-            }
-            $groupMember = trim(strtolower($groupMember));
-
-            return (array_search($groupMember, array_map('strtolower', $members)) !== false);
+        $users = [];
+        if (! is_array($user)) {
+            $users[] = $user;
         } else {
-            throw new ModelException('group must be a string or a instance of' . DistinguishedName::class);
+            $users = $user;
         }
+
+        foreach ($users as $user) {
+            if (is_object($user) && ($user instanceof DistinguishedName || $user instanceof User)) {
+                $members = $this->getMembers(false);
+                if ($members === null) {
+                    return false;
+                }
+                return boolval(array_filter($members, function ($dn) use ($user) {
+                    if (isset($user->getDn())) {
+                        return $user->getDn()->equals($dn);
+                    }
+
+                    return $user->equals($dn);
+                }));
+            } elseif (is_string($user)) {
+                $members = $this->getMembers();
+                if ($members === null) {
+                    return false;
+                }
+                $user = trim(strtolower($user));
+
+                return (array_search($user, array_map('strtolower', $members)) !== false);
+            } else {
+                throw new ModelException('group must be a string or a instance of' . DistinguishedName::class . ' or ' . User::class);
+            }
+        }
+
+        return false;
     }
 }
