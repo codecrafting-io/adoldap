@@ -139,7 +139,7 @@ class Group extends Model
                     return false;
                 }
                 return boolval(array_filter($members, function ($dn) use ($user) {
-                    if (isset($user->getDn())) {
+                    if (isset($user->getDn)) {
                         return $user->getDn()->equals($dn);
                     }
 

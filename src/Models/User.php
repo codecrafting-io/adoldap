@@ -467,7 +467,7 @@ class User extends Model
                     return false;
                 }
                 return boolval(array_filter($memberOf, function ($dn) use ($group) {
-                    if (isset($group->getDn())) {
+                    if (isset($group->getDn)) {
                         return $group->getDn()->equals($dn);
                     }
 

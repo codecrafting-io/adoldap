@@ -195,7 +195,7 @@ class QueryBuilder
         // are used for constructing models. The asterisk indicates that
         // we want all attributes returned for LDAP records.
         if (! in_array('*', $selects)) {
-            array_push($selects, 'objectclass', 'distinghishedname');
+            array_push($selects, 'objectclass', 'distinguishedname');
         }
 
         //Return unique and escaped attributes for selection
