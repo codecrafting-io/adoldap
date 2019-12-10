@@ -1,8 +1,8 @@
 # AdoLDAP
 
-[![Latest Stable Version](https://poser.pugx.org/codecrafting-net/adoldap/v/stable)](https://packagist.org/packages/codecrafting-net/adoldap)
-[![License](https://poser.pugx.org/codecrafting-net/adoldap/license)](https://packagist.org/packages/codecrafting-net/adoldap)
-[![Downloads](https://poser.pugx.org/codecrafting-net/adoldap/downloads)](https://packagist.org/packages/codecrafting-net/adoldap)
+[![Latest Stable Version](https://poser.pugx.org/codecrafting-io/adoldap/v/stable)](https://packagist.org/packages/codecrafting-io/adoldap)
+[![License](https://poser.pugx.org/codecrafting-io/adoldap/license)](https://packagist.org/packages/codecrafting-io/adoldap)
+[![Downloads](https://poser.pugx.org/codecrafting-io/adoldap/downloads)](https://packagist.org/packages/codecrafting-net/adoldap)
 
 ## Summary
 
@@ -51,7 +51,7 @@ In another words, now you can create web applications that to search through LDA
 The AdoLDAP only works on Windows, because COM extensions is the way to use ADODB, since ADO is a Windows only. To install AdoLDAP use the following command
 
 ```sh
-composer require codecrafting-net/adoldap
+composer require codecrafting-io/adoldap
 ```
 
 ## Configuration
