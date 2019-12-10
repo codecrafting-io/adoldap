@@ -466,21 +466,26 @@ class User extends Model
                 if ($memberOf === null) {
                     return false;
                 }
-                return boolval(array_filter($memberOf, function ($dn) use ($group) {
+                $equals = array_filter($memberOf, function ($dn) use ($group) {
                     if (isset($group->getDn)) {
                         return $group->getDn()->equals($dn);
                     }
 
                     return $group->equals($dn);
-                }));
+                });
+                if ($equals) {
+                    return true;
+                }
             } elseif (is_string($group)) {
                 $memberOf = $this->getMemberOf();
                 if ($memberOf === null) {
                     return false;
                 }
                 $group = trim(strtolower($group));
-
-                return (array_search($group, array_map('strtolower', $memberOf)) !== false);
+                $equals = (array_search($group, array_map('strtolower', $memberOf)) !== false);
+                if ($equals) {
+                    return true;
+                }
             } else {
                 throw new ModelException('group must be a string or a instance of' . DistinguishedName::class);
             }

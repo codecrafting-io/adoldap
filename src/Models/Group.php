@@ -138,21 +138,26 @@ class Group extends Model
                 if ($members === null) {
                     return false;
                 }
-                return boolval(array_filter($members, function ($dn) use ($user) {
+                $equals = boolval(array_filter($members, function ($dn) use ($user) {
                     if (isset($user->getDn)) {
                         return $user->getDn()->equals($dn);
                     }
 
                     return $user->equals($dn);
                 }));
+                if ($equals) {
+                    return true;
+                }
             } elseif (is_string($user)) {
                 $members = $this->getMembers();
                 if ($members === null) {
                     return false;
                 }
                 $user = trim(strtolower($user));
-
-                return (array_search($user, array_map('strtolower', $members)) !== false);
+                $equals = (array_search($user, array_map('strtolower', $members)) !== false);
+                if ($equals) {
+                    return true;
+                }
             } else {
                 throw new ModelException('group must be a string or a instance of' . DistinguishedName::class . ' or ' . User::class);
             }
