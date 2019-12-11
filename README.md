@@ -21,7 +21,7 @@
   - [After Fetch Callback](#after-fetch-callback)
 - [Comming Soon](#comming-soon)
 
- > :warning: **WARNING:** :warning: This library still on alfa, so testing is on the way and newer version may break backwards compability.
+ > :warning: **WARNING:** :warning: This library still on alfa, so testing is on the way and newer versions may break backwards compability.
 
 The AdoLDAP is a small PHP library to seamless search and authenticate on the Active Directory with ADO and LDAP. In short terms it provides the following benefits (:star::star::star::star::star:):
 
