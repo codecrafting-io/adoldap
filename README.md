@@ -25,30 +25,30 @@
 
 The AdoLDAP is a small PHP library to seamless search and authenticate on the Active Directory with ADO and LDAP. In short terms it provides the following benefits (:star::star::star::star::star:):
 
-- :star: Authless way to connect to Active Directory, not requiring a single configurtion, not even a server if you wanted.
-- :star: A nice semantic syntax that is easy/reusable/fun to use. You can use pre built searchs to find Users, Computers and Groups, handling them as object models, with a easy human readable get/set syntax.
+- :star: Seamless way to connect to Active Directory, not requiring a single configurtion, not even a server if you wanted.
+- :star: A nice semantic syntax that is easy/reusable/fun to use. You can use pre built searchs to find Users, Computers and Groups, handling them as object Model, with a easy human readable get/set syntax.
 - :star: A fluent QueryBuilder having support for both [LDAP](https://docs.microsoft.com/en-us/windows/win32/adsi/ldap-dialect) and [SQL](https://docs.microsoft.com/en-us/windows/win32/adsi/sql-dialect) dialects.
 - :star: Tools to discover information about you current env, regarding to the available Domain Controllers, connected DCs, main DCs, domain name etc.
 - :star: Native PHP data type handling. No strangeous and obscure `VARIANT` objects for returned values, with a nice Iterator interface to loop through objects.
 
 ## How it works
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
 The **main feature** that AdoLDAP provides is a **seamless way to authenticate on AD** with LDAP using the current security context of the thread in execution. This is a feature that is implemented by the [**ADODB Active Directory Interface**](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which can be used through **COM objects** whithin PHP language (or any COM aware language). Usually this means if the current user are logged on a domain, and this user have permission to search on AD (which likely will), the ADODB don't require especific cridentials to connect.
 
-In another words, now you can create web applications that to search through LDAP without the need of a especific read/write user to connect. For example, you can have use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take the benefit of a seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
+In another words, now you can create web applications that can search through LDAP without the need of a especific read/write user to connect. For example, you can have use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take the advantage of a seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
 
 ## Requirements
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
 - Windows environtment.
 - PHP >= 7.1 64bits
 - COM PHP extension enabled
 - [Composer](https://getcomposer.org/)
 
-The AdoLDAP only works on Windows, because COM extensions is the way to use ADODB, since ADO is a Windows only. To install AdoLDAP use the following command
+The AdoLDAP only works on Windows, because COM extensions is the way to use ADODB, since ADO is a Windows only. To install AdoLDAP use the following command:
 
 ```sh
 composer require codecrafting-io/adoldap
@@ -56,15 +56,15 @@ composer require codecrafting-io/adoldap
 
 ## Configuration
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
 ### Domain Information
 
-[SUBIR](#configuration)
+[TOP](#configuration)
 
-Like was said you can search providing no information to connect. This is due to the feature of ADODB that allows to connect provding zero information about, credentials or server to connect. If you provide no information about the server or the baseDn to be used to connect, the library will likely connect to the user `logonDomainController`, which is the domain controller server that the user was last connected.
+Like was said you can search providing no information to connect. This is due to the feature of ADODB that allows connections provding zero information about, credentials or host to connect. If you provide no information about the host or the baseDn to be used to connect, the library will likely connect to the user `logonDomainController`, which is the domain controller host that the user was last connected.
 
-To understant what the domain informations available, use the following code:
+To understant what domain informations are available, use the following code:
 
 ```php
 try {
@@ -89,9 +89,9 @@ domainControllers | array | All available DCs
 
 ### Connection configuration
 
-[SUBIR](#configuration)
+[TOP](#configuration)
 
-Even not beign necessary to provide a single information to connect, is recommended to do it due to consistency of search results and specially performance. Is **recommeded** to provide a BASE_DN (you can use the `defaultNamingContext`) and for servers is preferreable to use the `primaryDomainControllers`, to a faster connection. So after you inspect the values returned by the code above, use them to connect like in the code below:
+Even not beign necessary to provide a single information to connect, is recommended to do it due to consistency of the search results and specially for performance. Is **recommeded** to provide a BASE_DN (you can use the `defaultNamingContext`) and for servers is preferreable to use the `primaryDomainControllers`, to a faster connection. So after you inspect the values returned by the code above, use them to connect like in the code below:
 
 ```php
 try {
@@ -125,7 +125,7 @@ parser | string | `Parser::class` | The data parser of a result set.
 
 ## Searching
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
 There are two ways to search, using RAW queries or building through the `QueryBuilder`.
 
@@ -138,7 +138,7 @@ try {
         'baseDn' => 'DC=MYDOMAIN,DC=COM',
     ];
     $ad = new AdoLDAP($config);
-    $ad->search()->query("my query");
+    $ad->search()->query("<LDAP://server01.mydomain.com/DC=MYDOMAIN,DC=COM>;(&(objectCategory=user)(sAMAccountName=jdoe));sAMAccountName,name");
 } catch(\AdoLDAPException $e) {
     dump($e);
 }
@@ -153,7 +153,7 @@ try {
         'baseDn' => 'DC=MYDOMAIN,DC=COM',
     ];
     $ad = new AdoLDAP($config);
-    $ad->search()->whereEquals('objectCategory', 'user')->findBy('sAMAccountName', 'supercool');
+    $ad->search()->whereEquals('objectCategory', 'user')->findBy('sAMAccountName', 'jdoe');
 } catch(\AdoLDAPException $e) {
     dump($e);
 }
@@ -161,9 +161,9 @@ try {
 
 ### Query Builder
 
-[SUBIR](#searching)
+[TOP](#searching)
 
-The query builder allows you to easily create queries using both LDAP and SQL Dialects. The main class `AdoLDAP` provides a `search` method that is a new instance of a `SearchFactory`. The `SearchFactory` can setup a new `QueryBuilder` for you begin to construct your search. You can use the `newQuery` method of `SearchFactory` to build a `QueryBuilder`, but you also can use any available method of `QueryBuilder` due to the magic methods present on `SearchFactory`, like the example below:
+The query builder allows you to easily create queries using both LDAP and SQL Dialects. The main class `AdoLDAP` provides a `search` method that is a new instance of a `SearchFactory`. The `SearchFactory` can setup a new `QueryBuilder` to construct a search. You can use the `newQuery` method of `SearchFactory` to build a `QueryBuilder`, but you also can use any available method of `QueryBuilder` due to the magic methods present on `SearchFactory`, like the example below:
 
 ```php
 $ad->search()->newQuery()->whereEquals('objectCategory', 'user')->findBy('sAMAccountName', 'jdoe');
@@ -206,7 +206,7 @@ $ad->search()
 
 ### Search Dialects
 
-[SUBIR](#searching)
+[TOP](#searching)
 
 The `QueryBuilder` can search using both the [LDAP](https://docs.microsoft.com/en-us/windows/win32/adsi/ldap-dialect) and [SQL](https://docs.microsoft.com/en-us/windows/win32/adsi/sql-dialect) dialects. You can configure the dialect on the configuration, like the example below:
 
@@ -227,9 +227,9 @@ The default dialect is `LDAPDialect`. You can have your own implementation of bo
 
 ## Handling Data
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
-Once you create your search the data is retrivied by a `ResultSetIterator`. Using *ADODB* the result data is returned by a **Record Set** which have similar function as a cursor, or a iterator. The `ResultSetIterator` implements the native PHP classes `SeekableIterator` and `Countable`, so in this way it's possible to simply loop through like was `array` on a `foreach`.
+Once you create your search, the data is retrivied by a `ResultSetIterator`. Using *ADODB* the result data is returned by a [**RecordSet**](https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/recordset-object-ado?view=sql-server-ver15) which have similar function as a cursor, or a iterator. The `ResultSetIterator` implements the native PHP classes `SeekableIterator` and `Countable`, so in this way it's possible to simply loop through like was `array` on a `foreach`.
 
 ```php
 $users = $ad->search()->users()
@@ -244,13 +244,13 @@ foreach($users as $user) {
 }
 ```
 
-Each position of a result set is retrievied by the `current` method of a `ResultSetIterator`. The data is typically returned as a `Entry`. A `Entry` holds all attributes returned by the search and exposes them as get/set magic attributes, like in the example above, or you can also use `getAttribute` and `setAttribute` to get the desired values. If a attribute does not exists a `null` value will be returned instead.
+Each position of a result set is retrievied by the `current` method of a `ResultSetIterator`. The data is typically returned as a `Entry`. A `Entry` holds all attributes returned by the search and expose them as get/set magic attributes, like in the example above, or you can also use `getAttribute` and `setAttribute` to get the desired values. If a attribute does not exists a `null` value will be returned instead.
 
 ### Models & Column Map Attributes
 
-[SUBIR](#handling-data)
+[TOP](#handling-data)
 
-Most of the searchs actually returns one of the `Models`, could beign a `User`, `Computer` or `Group`. The `Model` extends a `Entry` by provinding a human readeable get/set methods for the "default attributes", that enhances and facilitates the handling of certain values. If you find particular hard to understand the meaning or just don't known the available main attributes for objects on LDAP, the `Model` provides a `COLUMN_MAP` that maps the most important attributes of the corresponding AD object, to more "human readeable" names. For example take a look to the `COLUMN_MAP` of a `User`:
+Most of the searchs actually returns one of the `Models`, could beign a `User`, `Computer` or `Group`. The `Model` extends a `Entry` by provinding a human readeable get/set methods for the "default attributes", that enhances and facilitates the handling of certain values. If you find particular hard to understand the meaning or just don't known the available main attributes for objects on LDAP, the `Model` provides a `COLUMN_MAP` that maps the most important attributes of the corresponding AD object, to the more "human readeable" names. For example take a look to the `COLUMN_MAP` of a `User`:
 
 ```php
 const COLUMN_MAP = [
@@ -352,13 +352,13 @@ $ad->search()->user('jdoe');
 $ad->search()->user('jdoe', User::getDefaultAttributes(), false);
 ```
 
-> :warning: **IMPORTANT:** :warning: Is possible to select all attributes, by provinding the value `['*']`, but this is **EXTREMELY DISCOURAGED**, not only by the fact that may be a lot of attributes that you possibily won't use, but specially to performance reasons. When you use a query, using the wildcard `*` the ADODB returns the ADSPATH, which is the full distinguished name of the object, forcing the library to resolve them by binding directly to the object using `COM`, which is EXTREMELY slow even for a single object. Normally searching for a entry takes arround 150-350ms, but binding to the object can take 4s. So only use for test purposes.
+> :warning: **IMPORTANT:** :warning: Is possible to select all attributes, by provinding the value `['*']`, but this is **EXTREMELY DISCOURAGED**, not only by the fact that may have a lot of attributes that possibily won't be used, but specially to performance reasons. When you use a query, using the wildcard `*` the ADODB returns the ADSPATH, which is the full distinguished name of the object, forcing the library to resolve them by binding directly to the object using `COM`, which is EXTREMELY slow even for a single object. Normally searching for a entry takes arround 200-400ms, but binding to the object can take 4s. So only use for test purposes.
 
 ### Special Attributes
 
-[SUBIR](#handling-data)
+[TOP](#handling-data)
 
-In addition to the `Model`, some attributes are handling as objects, like the `DistinguishedName`, `OS`, `Address` and `ObjectClass`.
+In addition to the `Model`, some attributes are handled as objects, like the `DistinguishedName`, `OS`, `Address` and `ObjectClass`.
 
 #### DistinguidedName
 
@@ -372,7 +372,7 @@ echo $dn->getPath() //Whole Path - CN=AWESOME GROUP,DC=MYDOMAIN,DC=COM
 
 #### ObjectClass
 
-The `ObjectClass` is a simple object wrap to the `array` of the `objectClass` attribute values. The class also provides the method `getMostRelevant` which is the last and most significative name of a `ObjectClass`. Each `Model` already have a defined `objectClass` that can be obtained by using the static method `objectClass`.
+The `ObjectClass` is a simple object wrap to the `array` of the `objectClass` attributes. The class also provides the method `getMostRelevant` which is the last and most significative name of a `ObjectClass`. Each `Model` already have a defined `objectClass` that can be obtained by using the static method `objectClass`.
 
 ```php
 echo User::objectClass()->getMostRelevant() //outputs user
@@ -391,7 +391,7 @@ echo $user->getAddress()->getCountry();
 
 #### OS
 
-The `OS` handles the OS related values of the attributes `operatingSystem` and `operatingSystemVersion`, that can be found on `Computer` entries. The class extracts and splits the data providing methods for retrieve the `name`, `version`, `flavour`, and also ways to easily compare OSs.
+The `OS` handles the OS related values of the attributes `operatingSystem` and `operatingSystemVersion`, that can be found on `Computer` entries. The class extracts and splits the data providing methods to retrieve the `name`, `version`, `flavour`, and also ways to easily compare OSs.
 
 ```php
 $computer = $ad->search()->computer('MACHINE01');
@@ -401,7 +401,7 @@ $computer->compareTo($ad->search()->computer('MACHEINE02')) //outputs -1, 0, 1;
 
 ### Paging Data
 
-[SUBIR](#handling-data)
+[TOP](#handling-data)
 
 The ADODB natively page the results by using the [`RecordSet`](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which are managed by the `ResultSetIterator`. You can provide a specific LDAP page size by a value for `pageSize` configuration. The default value is 1000. Nevertheless, the `ResultSetIterator` provides a separate paging using the `getEntries` method, which allows you to define a proper limit/offset.
 
@@ -415,7 +415,7 @@ $users = $ad->search()->users()
 
 ### After Fetch Callback
 
-[SUBIR](#handling-data)
+[TOP](#handling-data)
 
 The `ResultSetIterator` also provides a `afterFetch` callback, which allows you to transform the entries every time the `current` method is called.
 
@@ -429,11 +429,11 @@ $user = $ad->search()->user('jdoe')->afterFetch(function($user) {
             })->getEntries();
 ```
 
-You can set multiple afterFetch multiple times, which will transform the data by the order that was provided.
+You can set afterFetch multiple times, which will transform the data multiple times by the order that was provided.
 
 ## Comming Soon
 
-[SUBIR](#adoldap)
+[TOP](#adoldap)
 
 - Active Record `Model`. For now only search functionality is available.
 - Event support.
@@ -445,4 +445,4 @@ You can set multiple afterFetch multiple times, which will transform the data by
 
 Thanks for the [Adldap2](https://github.com/Adldap2/Adldap2) for inspiration to create this library.
 
-> Made with :heart: by @lucasmarotta.
+> Made with :heart: by [@lucasmarotta](https://github.com/lucasmarotta).
