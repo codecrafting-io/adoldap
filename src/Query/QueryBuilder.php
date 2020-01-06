@@ -174,7 +174,8 @@ class QueryBuilder
     public function select($attributes = [])
     {
         $attributes = is_array($attributes) ? $attributes : func_get_args();
-        if (!empty($attributes)) {
+        if (! empty($attributes)) {
+            $attributes = array_map('strtolower', $attributes);
             $this->attributes = $attributes;
         }
 

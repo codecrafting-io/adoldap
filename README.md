@@ -23,10 +23,10 @@
 
  > :warning: **WARNING:** :warning: This library still on alfa, so testing is on the way and newer versions may break backwards compability.
 
-The AdoLDAP is a small PHP library to seamless search and authenticate on the Active Directory with ADO and LDAP. In short terms it provides the following benefits (:star::star::star::star::star:):
+The AdoLDAP is a small PHP library to seamless search and authenticate on Active Directory with ADO and LDAP. In short terms it provides the following benefits:
 
 - :star: Seamless way to connect to Active Directory, not requiring a single configurtion, not even a server if you wanted.
-- :star: A nice semantic syntax that is easy/reusable/fun to use. You can use pre built searchs to find Users, Computers and Groups, handling them as object Model, with a easy human readable get/set syntax.
+- :star: A nice semantic syntax that is easy/reusable/fun to use. You can use pre built searchs to find Users, Computers and Groups, handling them as objects, with a easy human readable get/set syntax.
 - :star: A fluent QueryBuilder having support for both [LDAP](https://docs.microsoft.com/en-us/windows/win32/adsi/ldap-dialect) and [SQL](https://docs.microsoft.com/en-us/windows/win32/adsi/sql-dialect) dialects.
 - :star: Tools to discover information about you current env, regarding to the available Domain Controllers, connected DCs, main DCs, domain name etc.
 - :star: Native PHP data type handling. No strangeous and obscure `VARIANT` objects for returned values, with a nice Iterator interface to loop through objects.
@@ -35,9 +35,9 @@ The AdoLDAP is a small PHP library to seamless search and authenticate on the Ac
 
 [TOP](#adoldap)
 
-The **main feature** that AdoLDAP provides is a **seamless way to authenticate on AD** with LDAP using the current security context of the thread in execution. This is a feature that is implemented by the [**ADODB Active Directory Interface**](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which can be used through **COM objects** whithin PHP language (or any COM aware language). Usually this means if the current user are logged on a domain, and this user have permission to search on AD (which likely will), the ADODB don't require especific cridentials to connect.
+The **main feature** that AdoLDAP provides is a **seamless way to authenticate on AD** with LDAP using the current security context of the thread in execution. This is a feature implemented by the [**ADODB Active Directory Interface**](https://docs.microsoft.com/en-us/windows/win32/adsi/searching-with-activex-data-objects-ado), which can be used through **COM objects** whithin PHP language (or any COM aware language). Usually this means if the current user are logged on a domain, and this user have permission to search on AD (which likely will), the ADODB don't require especific cridentials to connect.
 
-In another words, now you can create web applications that can search through LDAP without the need of a especific read/write user to connect. For example, you can have use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take the advantage of a seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
+In another words, now you can create web applications that can search through LDAP without the need of a especific read/write user to connect. For example, you can use [**Windows Authentication**](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/windowsauthentication/) setup and take advantage of a seamless search information about the current authenticated user. You also can test on your local machine even not having Windows Authentication.
 
 ## Requirements
 
@@ -91,7 +91,7 @@ domainControllers | array | All available DCs
 
 [TOP](#configuration)
 
-Even not beign necessary to provide a single information to connect, is recommended to do it due to consistency of the search results and specially for performance. Is **recommeded** to provide a BASE_DN (you can use the `defaultNamingContext`) and for servers is preferreable to use the `primaryDomainControllers`, to a faster connection. So after you inspect the values returned by the code above, use them to connect like in the code below:
+Even not beign necessary to provide a single configuration to connect, is recommended to do it due to consistency of the search results and specially for performance reasons. Is **recommeded** to provide a BASE_DN (you can use the `defaultNamingContext`) and for servers is preferreable to use the `primaryDomainControllers`, to a faster connection. So after you inspect the values returned by the code above, use them to connect like in the code below:
 
 ```php
 try {
@@ -116,7 +116,7 @@ dialect | string | `LDAPDialect::class` | The dialect class to use for the ADO L
 baseDn | string | `DialectInterface::ROOT_DN` | The base distinguished name of your domain. Use ROOT_DN to discover the defaultNamingContext.
 username | string | null | The username to connect to your hosts with.
 password | string | null | The password that is utilized with the above user.
-ssl | bool | false | Whether or not to use SSL when connecting to your host.
+ssl | bool | false | Whether or not to use SSL when connecting to your host. If true overrides the port configuration
 autoConnect | bool | true | Whether or not to automaticly connect with the LDAP Provider.
 timeout | int | 30 | Timeout of connection execution in seconds
 pageSize | int | 1000 | Maximum number of objects to return in a result set page, see <https://docs.microsoft.com/en-us/windows/win32/adsi/retrieving-large-results-sets>
@@ -229,7 +229,7 @@ The default dialect is `LDAPDialect`. You can have your own implementation of bo
 
 [TOP](#adoldap)
 
-Once you create your search, the data is retrivied by a `ResultSetIterator`. Using *ADODB* the result data is returned by a [**RecordSet**](https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/recordset-object-ado?view=sql-server-ver15) which have similar function as a cursor, or a iterator. The `ResultSetIterator` implements the native PHP classes `SeekableIterator` and `Countable`, so in this way it's possible to simply loop through like was `array` on a `foreach`.
+Once you create your search, the data is retrivied by a `ResultSetIterator`. Using *ADODB* the result data is returned by a [**RecordSet**](https://docs.microsoft.com/en-us/sql/ado/reference/ado-api/recordset-object-ado?view=sql-server-ver15) which have similar function as a cursor, or a iterator. The `ResultSetIterator` implements the native PHP classes `SeekableIterator` and `Countable`, so in this way it's possible to simply loop through like it was `array` on a `foreach`.
 
 ```php
 $users = $ad->search()->users()
@@ -244,7 +244,7 @@ foreach($users as $user) {
 }
 ```
 
-Each position of a result set is retrievied by the `current` method of a `ResultSetIterator`. The data is typically returned as a `Entry`. A `Entry` holds all attributes returned by the search and expose them as get/set magic attributes, like in the example above, or you can also use `getAttribute` and `setAttribute` to get the desired values. If a attribute does not exists a `null` value will be returned instead.
+Each position of a *RecordSet* is retrievied by the `current` method of a `ResultSetIterator`. The data is typically returned as a `Entry`. A `Entry` holds all attributes returned by the search and expose them as get/set magic attributes, like in the example above, or you can also use `getAttribute` and `setAttribute` to get the desired values. If a attribute does not exists a `null` value will be returned instead.
 
 ### Models & Column Map Attributes
 
@@ -289,7 +289,7 @@ const COLUMN_MAP = [
 ];
 ```
 
-So in this way, the `User` model provides a list of get/set attributes using the mapped names, but if you prefer to use the original name scheme, you can stil use the get/set magic attributes or the `getAttribute` and `setAttribute` methods.
+So in this way, the `User` model provides a list of get/set attributes using the mapped names, but if you prefer to use the original name scheme, you can still use the get/set magic attributes or the `getAttribute` and `setAttribute` methods.
 
 ```php
 $users = $ad->search()->users()

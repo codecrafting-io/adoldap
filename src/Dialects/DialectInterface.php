@@ -15,11 +15,6 @@ abstract class DialectInterface
     const PROTOCOL = 'LDAP://';
 
     /**
-     * SSL LDAP protocol string
-     */
-    const SSL_PROTOCOL = 'LDAPS://';
-
-    /**
      * Standard LDAP port
      */
     const PORT = 389;
@@ -158,15 +153,17 @@ abstract class DialectInterface
     }
 
     /**
-     * Set whether the connection must be bound over SSL.
+     * Set whether the connection must be bound over SSL. True overrides the port configuration
      *
      * @param  bool  $ssl  Whether the connection must be bound over SSL.
-     *
      * @return  self
      */
     public function setSsl(bool $ssl)
     {
         $this->ssl = $ssl;
+        if ($this->ssl) {
+            $this->port = self::SSL_PORT;
+        }
 
         return $this;
     }

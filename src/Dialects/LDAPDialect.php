@@ -80,9 +80,6 @@ class LDAPDialect extends DialectInterface
     public function compileFrom()
     {
         $adPath = parent::PROTOCOL;
-        if ($this->isSsl()) {
-            $adPath = parent::SSL_PROTOCOL;
-        }
         if ($this->host && ! $this->isRootDn()) {
             $adPath .= $this->host;
             if ($this->port != parent::PORT) {

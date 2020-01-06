@@ -64,7 +64,7 @@ class AdoLDAP implements ProviderInterface
      */
     public function __destruct()
     {
-        $this->connection->unbind();
+        $this->close();
     }
 
     /**
@@ -155,13 +155,11 @@ class AdoLDAP implements ProviderInterface
     /**
      * @inheritDoc
      */
-    public function search()
+    public function close()
     {
-        if ($this->connection->isBound()) {
-            return new SearchFactory($this->connection, $this->configuration, $this->parser);
-        } else {
-            throw new ConnectionException("Connection not established");
-        }
+        $this->connection->unbind();
+
+        return $this;
     }
 
     /**
@@ -183,6 +181,18 @@ class AdoLDAP implements ProviderInterface
         }
 
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function search()
+    {
+        if ($this->connection->isBound()) {
+            return new SearchFactory($this->connection, $this->configuration, $this->parser);
+        } else {
+            throw new ConnectionException("Connection not established");
+        }
     }
 
     /**

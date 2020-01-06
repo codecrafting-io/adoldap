@@ -92,9 +92,6 @@ class SQLDialect extends DialectInterface
     public function compileFrom()
     {
         $adPath = parent::PROTOCOL;
-        if ($this->isSsl()) {
-            $adPath = parent::SSL_PROTOCOL;
-        }
         if ($this->host) {
             $adPath .= $this->host;
             if ($this->port != parent::PORT) {

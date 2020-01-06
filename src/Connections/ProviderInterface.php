@@ -57,18 +57,25 @@ interface ProviderInterface
     public function setParser(ParserInterface $parser);
 
     /**
-     * Check the connection
-     *
-     * @return boolean
-     */
-    public function checkConnection();
-
-    /**
      * Connect and bind to the domain controller using the current configuration
      *
      * @return self
      */
     public function connect();
+
+    /**
+     * Close the current connection
+     *
+     * @return void
+     */
+    public function close();
+
+    /**
+     * Check the connection
+     *
+     * @return boolean
+     */
+    public function checkConnection();
 
     /**
      * Gets a new SearchFactory instance

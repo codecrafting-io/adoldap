@@ -40,7 +40,7 @@ class AdoLDAPConfiguration
         // The password that is utilized with the above user.
         'password' => null,
 
-        // Whether or not to use SSL when connecting to your host.
+        // Whether or not to use SSL when connecting to your host. This override the port configuration
         'ssl' => false,
 
         // Whether or not to automaticly connect with the LDAP Provider

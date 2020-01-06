@@ -22,7 +22,7 @@ class ResultSetIterator implements SeekableIterator, Countable
      *
      * @var int
      */
-    private $elementCount = -1;
+    private $entryCount = -1;
 
     /**
      * The result set entry parser
@@ -66,6 +66,9 @@ class ResultSetIterator implements SeekableIterator, Countable
         }
     }
 
+    /**
+     * Close ResultSet upon destruction
+     */
     public function __destruct()
     {
         if ($this->isOpened()) {
@@ -206,18 +209,18 @@ class ResultSetIterator implements SeekableIterator, Countable
      */
     public function count()
     {
-        if ($this->elementCount == -1) {
+        if ($this->entryCount == -1) {
             if ($this->rs->RecordCount > 0) {
                 $this->rs->MoveLast();
             }
-            $this->elementCount = $this->rs->RecordCount;
+            $this->entryCount = $this->rs->RecordCount;
         }
 
-        return $this->elementCount;
+        return $this->entryCount;
     }
 
     /**
-     * Retrieve and parse the elements from a result set
+     * Retrieve and parse the entries from a result set
      *
      * @param integer $limit
      * @param integer $offset
@@ -228,10 +231,10 @@ class ResultSetIterator implements SeekableIterator, Countable
     {
         if ($limit >= 0) {
             $size = 0;
-            $elements = [];
+            $entries = [];
             $this->seek($offset);
             while ($this->valid()) {
-                $elements[] = $this->current();
+                $entries[] = $this->current();
                 $size++;
                 if ($limit != 0 && $size >= $limit) {
                     break;
@@ -240,7 +243,7 @@ class ResultSetIterator implements SeekableIterator, Countable
                 }
             }
 
-            return $elements;
+            return $entries;
         } else {
             throw new OutOfBoundsException("Invalid limit ({$limit})");
         }
